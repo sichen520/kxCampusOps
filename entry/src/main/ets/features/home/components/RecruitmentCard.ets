@@ -1,4 +1,9 @@
 import { RecruitmentPost } from '../../../domain/WorkflowModels';
+import {
+  recruitmentDeadlineLabel,
+  recruitmentDeadlineState,
+  RecruitmentDeadlineState
+} from '../domain/RecruitmentDiscovery';
 import { StatusPill } from '../../../shared/components/StatusPill';
 import {
   COLOR_AMBER,
@@ -9,6 +14,8 @@ import {
   COLOR_MUTED,
   COLOR_PRIMARY,
   COLOR_PRIMARY_SOFT,
+  COLOR_RED,
+  COLOR_RED_SOFT,
   COLOR_SURFACE,
   COLOR_TEXT
 } from '../../../shared/Theme';
@@ -24,6 +31,28 @@ export struct RecruitmentCard {
 
   private defaultActionLabel(): string {
     return this.post.kind === '比赛招募' ? '申请加入' : '报名岗位';
+  }
+
+  private deadlineFillColor(): string {
+    const state: RecruitmentDeadlineState = recruitmentDeadlineState(this.post.deadline, Date.now());
+    if (state === RecruitmentDeadlineState.EXPIRED || state === RecruitmentDeadlineState.URGENT) {
+      return COLOR_RED_SOFT;
+    }
+    if (state === RecruitmentDeadlineState.SOON) {
+      return COLOR_AMBER_SOFT;
+    }
+    return COLOR_PRIMARY_SOFT;
+  }
+
+  private deadlineTextColor(): string {
+    const state: RecruitmentDeadlineState = recruitmentDeadlineState(this.post.deadline, Date.now());
+    if (state === RecruitmentDeadlineState.EXPIRED || state === RecruitmentDeadlineState.URGENT) {
+      return COLOR_RED;
+    }
+    if (state === RecruitmentDeadlineState.SOON) {
+      return COLOR_AMBER;
+    }
+    return COLOR_PRIMARY;
   }
 
   build() {
@@ -56,9 +85,17 @@ export struct RecruitmentCard {
       }
       .width('100%')
       Text(this.post.organization).fontSize(11).fontColor(COLOR_BLUE)
-      Text(`${this.post.requiredRole} · 截止 ${this.post.deadline}`)
-        .fontSize(12)
-        .fontColor(COLOR_AMBER)
+      Text(this.post.requiredRole).fontSize(12).fontColor(COLOR_TEXT)
+        .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
+      Row({ space: 8 }) {
+        Text(`截止 ${this.post.deadline}`).layoutWeight(1).fontSize(11).fontColor(COLOR_MUTED)
+        StatusPill({
+          text: recruitmentDeadlineLabel(this.post.deadline, Date.now()),
+          fillColor: this.deadlineFillColor(),
+          textColor: this.deadlineTextColor()
+        })
+      }
+      .width('100%')
       Row({ space: 8 }) {
         Button('查看详情')
           .layoutWeight(1)

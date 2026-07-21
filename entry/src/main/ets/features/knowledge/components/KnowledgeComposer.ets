@@ -1,6 +1,7 @@
-import { RESOURCE_CATEGORIES, RESOURCE_TYPES } from '../../../data/MockCampusData';
+import { DISCUSSION_BOARDS, RESOURCE_CATEGORIES, RESOURCE_TYPES } from '../../../data/MockCampusData';
 import { DiscussionPost, KnowledgeResource } from '../../../domain/WorkflowModels';
 import { StatusPill } from '../../../shared/components/StatusPill';
+import { formatLocalMinute } from '../../../shared/DateTime';
 import {
   COLOR_AMBER,
   COLOR_AMBER_SOFT,
@@ -21,15 +22,19 @@ export struct KnowledgeComposer {
   @State typeIndex: number = 0;
   @State customCategory: string = '';
   @State customType: string = '';
-  @State fileSelected: boolean = false;
   @State validationMessage: string = '';
   onClose: () => void = () => {};
   onResourcePublished: (resource: KnowledgeResource) => void = (_resource: KnowledgeResource) => {};
   onDiscussionPublished: (post: DiscussionPost) => void = (_post: DiscussionPost) => {};
 
+  private categoryOptions(): string[] {
+    return this.isResource ? RESOURCE_CATEGORIES : DISCUSSION_BOARDS;
+  }
+
   private selectedCategory(): string {
-    return RESOURCE_CATEGORIES[this.categoryIndex] === '其他' ? this.customCategory.trim() :
-      RESOURCE_CATEGORIES[this.categoryIndex];
+    const options: string[] = this.categoryOptions();
+    return this.isResource && options[this.categoryIndex] === '其他' ? this.customCategory.trim() :
+      options[this.categoryIndex];
   }
 
   private selectedType(): string {
@@ -39,10 +44,6 @@ export struct KnowledgeComposer {
   private publish(): void {
     if (this.title.trim().length === 0 || this.summary.trim().length === 0) {
       this.validationMessage = '请先填写标题和内容说明。';
-      return;
-    }
-    if (this.isResource && !this.fileSelected) {
-      this.validationMessage = '请先选择演示文件。';
       return;
     }
     if (this.selectedCategory().length === 0 || (this.isResource && this.selectedType().length === 0)) {
@@ -68,8 +69,8 @@ export struct KnowledgeComposer {
         favoriteCount: 0,
         averageRating: 0,
         ratingCount: 0,
-        createdAt: '刚刚',
-        fileName: '演示上传文件.pdf'
+        createdAt: formatLocalMinute(new Date()),
+        fileName: '未附带实体附件'
       };
       this.onResourcePublished(resource);
     } else {
@@ -84,7 +85,7 @@ export struct KnowledgeComposer {
         status: '讨论中',
         viewCount: 0,
         replyCount: 0,
-        createdAt: '刚刚'
+        createdAt: formatLocalMinute(new Date())
       };
       this.onDiscussionPublished(post);
     }
@@ -93,7 +94,7 @@ export struct KnowledgeComposer {
   @Builder
   CategoryPicker() {
     Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
-      ForEach(RESOURCE_CATEGORIES, (category: string, index: number) => {
+      ForEach(this.categoryOptions(), (category: string, index: number) => {
         Button(category)
           .height(32).fontSize(11)
           .fontColor(this.categoryIndex === index ? COLOR_PRIMARY : COLOR_MUTED)
@@ -155,9 +156,9 @@ export struct KnowledgeComposer {
         TextArea({ placeholder: this.isResource ? '说明资源内容、适用课程和使用注意事项' : '把问题、背景和你已经尝试过的方案写清楚', text: this.summary })
           .width('100%').height(120).backgroundColor(COLOR_SURFACE).border({ width: 1, color: COLOR_BORDER }).borderRadius(4)
           .onChange((value: string) => { this.summary = value; })
-        Text('主题分类').fontSize(13).fontWeight(FontWeight.Medium).fontColor(COLOR_TEXT)
+        Text(this.isResource ? '主题分类' : '讨论版块').fontSize(13).fontWeight(FontWeight.Medium).fontColor(COLOR_TEXT)
         this.CategoryPicker()
-        if (RESOURCE_CATEGORIES[this.categoryIndex] === '其他') {
+        if (this.isResource && RESOURCE_CATEGORIES[this.categoryIndex] === '其他') {
           TextInput({ placeholder: '填写自定义主题，例如网络安全、数字媒体', text: this.customCategory })
             .width('100%').height(42).backgroundColor(COLOR_SURFACE)
             .border({ width: 1, color: COLOR_BORDER }).borderRadius(4)
@@ -165,12 +166,13 @@ export struct KnowledgeComposer {
         }
         this.TypePicker()
         if (this.isResource) {
-          Button(this.fileSelected ? '演示文件已选择' : '选择演示文件')
-            .width('100%').height(42).fontSize(13)
-            .fontColor(this.fileSelected ? COLOR_PRIMARY : COLOR_AMBER)
-            .backgroundColor(this.fileSelected ? COLOR_PRIMARY_SOFT : COLOR_AMBER_SOFT)
-            .borderRadius(4)
-            .onClick(() => { this.fileSelected = true; })
+          Row() {
+            Text('附件状态').fontSize(13).fontWeight(FontWeight.Medium).fontColor(COLOR_TEXT)
+            Blank()
+            StatusPill({ text: '演示包未附带附件', fillColor: COLOR_AMBER_SOFT, textColor: COLOR_AMBER })
+          }
+          .width('100%')
+          .height(42)
         }
         if (this.validationMessage.length > 0) {
           Text(this.validationMessage).fontSize(12).fontColor(COLOR_AMBER)

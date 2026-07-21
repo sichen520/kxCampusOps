@@ -7,6 +7,11 @@ import {
   RecruitmentPost
 } from '../../../domain/WorkflowModels';
 import { accountIdForDemoAccount, roleForDemoAccount } from '../../../domain/WorkflowRules';
+import {
+  discoverRecruitments,
+  isRecruitmentExpired,
+  RecruitmentScope
+} from '../../home/domain/RecruitmentDiscovery';
 import { RecruitmentCard } from '../../home/components/RecruitmentCard';
 import { RecruitmentDetail } from '../../home/components/RecruitmentDetail';
 import {
@@ -31,6 +36,7 @@ export struct ActivityFeed {
   @Prop applicationApplicantName: string = '';
   @State selectedPostId: string = '';
   @State activeFilter: string = '全部';
+  @State activeScope: RecruitmentScope = RecruitmentScope.ALL;
   onRequireLogin: () => void = () => {};
   onSubmitApplication: (postId: string) => void = (_postId: string) => {};
   onApproveApplication: () => void = () => {};
@@ -48,14 +54,32 @@ export struct ActivityFeed {
     return post.requiredRole.includes('协调') || post.requiredRole.includes('引导');
   }
 
+  private allPosts(): RecruitmentPost[] {
+    return RECRUITMENT_POSTS.concat(this.extraPosts);
+  }
+
+  private relatedPostIds(): string[] {
+    if (this.applicationPostId.length > 0 && this.isCurrentApplicant()) {
+      return [this.applicationPostId];
+    }
+    return [];
+  }
+
+  private effectiveScope(): RecruitmentScope {
+    return !this.isLoggedIn && this.activeScope === RecruitmentScope.RELATED ?
+      RecruitmentScope.ALL : this.activeScope;
+  }
+
   private posts(): RecruitmentPost[] {
-    const keyword: string = this.query.trim();
-    return RECRUITMENT_POSTS.concat(this.extraPosts).filter((post: RecruitmentPost) => {
-      const sameKind: boolean = post.kind === RecruitmentKind.ACTIVITY;
-      const matched: boolean = keyword.length === 0 || post.title.includes(keyword) ||
-        post.summary.includes(keyword) || post.requiredRole.includes(keyword) || post.publisher.includes(keyword);
-      return sameKind && matched && this.matchesFilter(post);
-    });
+    return discoverRecruitments(
+      this.allPosts(),
+      RecruitmentKind.ACTIVITY,
+      this.query,
+      this.effectiveScope(),
+      accountIdForDemoAccount(this.demoAccount),
+      this.relatedPostIds(),
+      Date.now()
+    ).filter((post: RecruitmentPost) => this.matchesFilter(post));
   }
 
   private applicationMatches(postId: string): boolean {
@@ -70,8 +94,13 @@ export struct ActivityFeed {
     if (this.demoAccount !== DemoAccount.TEACHER) {
       return false;
     }
-    return this.posts().filter((post: RecruitmentPost) =>
+    return this.allPosts().filter((post: RecruitmentPost) =>
       post.id === postId && post.createdBy === accountIdForDemoAccount(this.demoAccount)).length > 0;
+  }
+
+  private isExpired(postId: string): boolean {
+    const matched: RecruitmentPost[] = this.allPosts().filter((post: RecruitmentPost) => post.id === postId);
+    return matched.length > 0 && isRecruitmentExpired(matched[0].deadline, Date.now());
   }
 
   private isStudentAccount(): boolean {
@@ -79,6 +108,9 @@ export struct ActivityFeed {
   }
 
   private actionLabel(postId: string): string {
+    if (this.isExpired(postId) && !this.applicationMatches(postId)) {
+      return '报名已截止';
+    }
     if (!this.isLoggedIn) {
       return '报名岗位';
     }
@@ -104,6 +136,9 @@ export struct ActivityFeed {
   }
 
   private actionDisabled(postId: string): boolean {
+    if (this.isExpired(postId) && !this.applicationMatches(postId)) {
+      return true;
+    }
     if (!this.isLoggedIn) {
       return false;
     }
@@ -135,7 +170,7 @@ export struct ActivityFeed {
       this.onRequireLogin();
       return;
     }
-    if (this.isStudentAccount()) {
+    if (this.isStudentAccount() && !this.isExpired(post.id)) {
       this.onSubmitApplication(post.id);
       this.selectedPostId = post.id;
     } else if (this.demoAccount === DemoAccount.TEACHER && this.isResponsibleTeacher(post.id) &&
@@ -143,6 +178,27 @@ export struct ActivityFeed {
       this.onApproveApplication();
       this.selectedPostId = post.id;
     }
+  }
+
+  @Builder
+  ScopeBar() {
+    Row({ space: 8 }) {
+      ForEach(this.isLoggedIn ?
+        [RecruitmentScope.ALL, RecruitmentScope.APPROACHING, RecruitmentScope.RELATED] :
+        [RecruitmentScope.ALL, RecruitmentScope.APPROACHING], (scope: RecruitmentScope) => {
+        Button(scope)
+          .height(32)
+          .fontSize(12)
+          .fontWeight(this.effectiveScope() === scope ? FontWeight.Bold : FontWeight.Medium)
+          .fontColor(this.effectiveScope() === scope ? '#FFFFFF' : COLOR_BLUE)
+          .backgroundColor(this.effectiveScope() === scope ? COLOR_BLUE : COLOR_BLUE_SOFT)
+          .borderRadius(4)
+          .onClick(() => {
+            this.activeScope = scope;
+          })
+      }, (scope: RecruitmentScope) => scope)
+    }
+    .width('100%')
   }
 
   @Builder
@@ -198,6 +254,7 @@ export struct ActivityFeed {
           Text(`${this.posts().length} 条`).fontSize(12).fontColor(COLOR_MUTED)
         }
         .width('100%')
+        this.ScopeBar()
         this.FilterBar()
         if (this.posts().length === 0) {
           Text('没有匹配的校园活动').width('100%').padding(28).textAlign(TextAlign.Center).fontSize(14).fontColor(COLOR_MUTED)

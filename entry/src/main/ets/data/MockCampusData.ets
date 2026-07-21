@@ -184,6 +184,28 @@ export const RESOURCE_TYPES: string[] = [
 
 export const KNOWLEDGE_RESOURCES: KnowledgeResource[] = [
   {
+    id: 'resource-ai-creative-competition-rules-2026',
+    category: '竞赛与升学',
+    resourceType: '其他',
+    title: '2026 中国高校计算机大赛人工智能创意赛通知与规程',
+    summary: '人工智能创意赛官方通知与竞赛规程盖章版，可保存 PDF 原文件用于资格、赛程和作品要求核验。',
+    author: '中国高校计算机大赛组委会',
+    courseName: '人工智能创意赛',
+    college: '竞赛资料',
+    major: '全校学生',
+    teacherName: '以官方文件为准',
+    permission: '全校公开',
+    tags: ['人工智能创意赛', '竞赛规程', '官方通知'],
+    viewCount: 0,
+    downloadCount: 0,
+    favoriteCount: 0,
+    averageRating: 0,
+    ratingCount: 0,
+    createdAt: '2026 官方文件',
+    fileName: '2026“中国高校计算机大赛-人工智能创意赛”通知&规程（盖章版）.pdf',
+    attachmentRawFile: 'ai_creative_competition_2026_rules.pdf'
+  },
+  {
     id: 'resource-arkts-state',
     category: 'HarmonyOS 开发',
     resourceType: '笔记',

@@ -1,6 +1,7 @@
 import { DISCUSSION_BOARDS, DISCUSSION_POSTS, DISCUSSION_REPLIES } from '../../../data/MockCampusData';
 import { DiscussionPost, DiscussionReply } from '../../../domain/WorkflowModels';
 import { StatusPill } from '../../../shared/components/StatusPill';
+import { formatLocalMinute } from '../../../shared/DateTime';
 import {
   COLOR_BLUE,
   COLOR_BLUE_SOFT,
@@ -13,6 +14,8 @@ import {
   PAGE_MAX_WIDTH
 } from '../../../shared/Theme';
 
+PersistentStorage.persistProp<DiscussionReply[]>('kxCampusOps.knowledge.replies.v1', []);
+
 @Component
 export struct DiscussionFeed {
   @Prop query: string = '';
@@ -22,16 +25,16 @@ export struct DiscussionFeed {
   @State selectedBoard: string = '全部';
   @State selectedPostId: string = '';
   @State replyText: string = '';
-  @State replies: DiscussionReply[] = DISCUSSION_REPLIES;
+  @StorageLink('kxCampusOps.knowledge.replies.v1') localReplies: DiscussionReply[] = [];
   @State notice: string = '';
   onRequireLogin: () => void = () => {};
 
   private posts(): DiscussionPost[] {
-    const keyword: string = this.query.trim();
-    return DISCUSSION_POSTS.concat(this.extraPosts).filter((post: DiscussionPost) => {
+    const keyword: string = this.query.trim().toLowerCase();
+    return this.extraPosts.concat(DISCUSSION_POSTS).filter((post: DiscussionPost) => {
       const boardMatched: boolean = this.selectedBoard === '全部' || post.board === this.selectedBoard;
-      const keywordMatched: boolean = keyword.length === 0 || post.title.includes(keyword) ||
-        post.content.includes(keyword) || post.tags.join(' ').includes(keyword);
+      const searchableText: string = `${post.title} ${post.content} ${post.tags.join(' ')}`.toLowerCase();
+      const keywordMatched: boolean = keyword.length === 0 || searchableText.includes(keyword);
       return boardMatched && keywordMatched;
     });
   }
@@ -41,12 +44,13 @@ export struct DiscussionFeed {
   }
 
   private postReplies(postId: string): DiscussionReply[] {
-    return this.replies.filter((reply: DiscussionReply) => reply.postId === postId);
+    return DISCUSSION_REPLIES.concat(this.localReplies)
+      .filter((reply: DiscussionReply) => reply.postId === postId);
   }
 
   @Builder
   BoardFilters() {
-    Row({ space: 8 }) {
+    Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
       ForEach(['全部'].concat(DISCUSSION_BOARDS), (board: string) => {
         Button(board)
           .height(34).fontSize(12)
@@ -54,6 +58,7 @@ export struct DiscussionFeed {
           .backgroundColor(this.selectedBoard === board ? COLOR_PRIMARY_SOFT : COLOR_SURFACE)
           .border({ width: 1, color: this.selectedBoard === board ? COLOR_PRIMARY : COLOR_BORDER })
           .borderRadius(4)
+          .margin({ right: 8, bottom: 8 })
           .onClick(() => { this.selectedBoard = board; })
       }, (board: string) => board)
     }
@@ -79,7 +84,7 @@ export struct DiscussionFeed {
               Row({ space: 10 }) {
                 Text(`${post.author} · ${post.createdAt}`).fontSize(11).fontColor(COLOR_MUTED)
                 Text(`${post.viewCount} 浏览`).fontSize(11).fontColor(COLOR_MUTED)
-                Text(`${post.replyCount} 回复`).fontSize(11).fontColor(COLOR_MUTED)
+                Text(`${this.postReplies(post.id).length} 回复`).fontSize(11).fontColor(COLOR_MUTED)
               }
               .width('100%')
             }
@@ -148,13 +153,13 @@ export struct DiscussionFeed {
                 this.onRequireLogin();
               } else if (this.replyText.trim().length > 0) {
                 const reply: DiscussionReply = {
-                  id: `reply-local-${this.replies.length}`,
+                  id: `reply-local-${Date.now()}`,
                   postId: post.id,
                   author: '当前账号',
                   content: this.replyText.trim(),
-                  createdAt: '刚刚'
+                  createdAt: formatLocalMinute(new Date())
                 };
-                this.replies = this.replies.concat([reply]);
+                this.localReplies = this.localReplies.concat([reply]);
                 this.replyText = '';
                 this.notice = '回复已发布';
               }

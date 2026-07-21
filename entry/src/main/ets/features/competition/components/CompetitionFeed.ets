@@ -11,6 +11,11 @@ import {
   isRecruitmentCreator,
   roleForDemoAccount
 } from '../../../domain/WorkflowRules';
+import {
+  discoverRecruitments,
+  isRecruitmentExpired,
+  RecruitmentScope
+} from '../../home/domain/RecruitmentDiscovery';
 import { RecruitmentCard } from '../../home/components/RecruitmentCard';
 import { RecruitmentDetail } from '../../home/components/RecruitmentDetail';
 import {
@@ -37,6 +42,7 @@ export struct CompetitionFeed {
   @Prop acceptedAdvisorPostIds: string[] = [];
   @State selectedPostId: string = '';
   @State activeFilter: string = '全部';
+  @State activeScope: RecruitmentScope = RecruitmentScope.ALL;
   onRequireLogin: () => void = () => {};
   onStartWorkflow: (title: string) => void = (_title: string) => {};
   onSubmitApplication: (postId: string) => void = (_postId: string) => {};
@@ -55,14 +61,33 @@ export struct CompetitionFeed {
     return post.requiredRole.includes('研究') || post.requiredRole.includes('答辩') || post.summary.includes('路演');
   }
 
+  private allPosts(): RecruitmentPost[] {
+    return RECRUITMENT_POSTS.concat(this.extraPosts);
+  }
+
+  private relatedPostIds(): string[] {
+    let result: string[] = this.acceptedAdvisorPostIds.slice();
+    if (this.applicationPostId.length > 0 && this.isCurrentApplicant()) {
+      result = result.concat([this.applicationPostId]);
+    }
+    return result;
+  }
+
+  private effectiveScope(): RecruitmentScope {
+    return !this.isLoggedIn && this.activeScope === RecruitmentScope.RELATED ?
+      RecruitmentScope.ALL : this.activeScope;
+  }
+
   private posts(): RecruitmentPost[] {
-    const keyword: string = this.query.trim();
-    return RECRUITMENT_POSTS.concat(this.extraPosts).filter((post: RecruitmentPost) => {
-      const sameKind: boolean = post.kind === RecruitmentKind.COMPETITION;
-      const matched: boolean = keyword.length === 0 || post.title.includes(keyword) ||
-        post.summary.includes(keyword) || post.requiredRole.includes(keyword) || post.publisher.includes(keyword);
-      return sameKind && matched && this.matchesFilter(post);
-    });
+    return discoverRecruitments(
+      this.allPosts(),
+      RecruitmentKind.COMPETITION,
+      this.query,
+      this.effectiveScope(),
+      accountIdForDemoAccount(this.demoAccount),
+      this.relatedPostIds(),
+      Date.now()
+    ).filter((post: RecruitmentPost) => this.matchesFilter(post));
   }
 
   private applicationMatches(postId: string): boolean {
@@ -73,7 +98,7 @@ export struct CompetitionFeed {
     if (roleForDemoAccount(this.demoAccount) !== AccountRole.STUDENT) {
       return false;
     }
-    return this.posts().filter((post: RecruitmentPost) =>
+    return this.allPosts().filter((post: RecruitmentPost) =>
       post.id === postId && isRecruitmentCreator(this.demoAccount, post)).length > 0;
   }
 
@@ -86,8 +111,13 @@ export struct CompetitionFeed {
       this.acceptedAdvisorPostIds.indexOf(postId) < 0) {
       return false;
     }
-    return this.posts().filter((post: RecruitmentPost) => post.id === postId &&
+    return this.allPosts().filter((post: RecruitmentPost) => post.id === postId &&
       post.advisorId === accountIdForDemoAccount(this.demoAccount)).length > 0;
+  }
+
+  private isExpired(postId: string): boolean {
+    const matched: RecruitmentPost[] = this.allPosts().filter((post: RecruitmentPost) => post.id === postId);
+    return matched.length > 0 && isRecruitmentExpired(matched[0].deadline, Date.now());
   }
 
   private canManagePost(postId: string): boolean {
@@ -95,6 +125,9 @@ export struct CompetitionFeed {
   }
 
   private actionLabel(postId: string): string {
+    if (this.isExpired(postId) && !this.applicationMatches(postId)) {
+      return '申请已截止';
+    }
     if (!this.isLoggedIn) {
       return '申请加入';
     }
@@ -129,6 +162,9 @@ export struct CompetitionFeed {
   }
 
   private actionDisabled(postId: string): boolean {
+    if (this.isExpired(postId) && !this.applicationMatches(postId)) {
+      return true;
+    }
     if (!this.isLoggedIn) {
       return false;
     }
@@ -171,10 +207,32 @@ export struct CompetitionFeed {
       this.applicationMatches(post.id) && this.applicationState === ApplicationState.PENDING) {
       this.onApproveApplication();
       this.selectedPostId = post.id;
-    } else if (roleForDemoAccount(this.demoAccount) === AccountRole.STUDENT && !this.canManagePost(post.id)) {
+    } else if (roleForDemoAccount(this.demoAccount) === AccountRole.STUDENT && !this.canManagePost(post.id) &&
+      !this.isExpired(post.id)) {
       this.onSubmitApplication(post.id);
       this.selectedPostId = post.id;
     }
+  }
+
+  @Builder
+  ScopeBar() {
+    Row({ space: 8 }) {
+      ForEach(this.isLoggedIn ?
+        [RecruitmentScope.ALL, RecruitmentScope.APPROACHING, RecruitmentScope.RELATED] :
+        [RecruitmentScope.ALL, RecruitmentScope.APPROACHING], (scope: RecruitmentScope) => {
+        Button(scope)
+          .height(32)
+          .fontSize(12)
+          .fontWeight(this.effectiveScope() === scope ? FontWeight.Bold : FontWeight.Medium)
+          .fontColor(this.effectiveScope() === scope ? '#FFFFFF' : COLOR_PRIMARY)
+          .backgroundColor(this.effectiveScope() === scope ? COLOR_PRIMARY : COLOR_PRIMARY_SOFT)
+          .borderRadius(4)
+          .onClick(() => {
+            this.activeScope = scope;
+          })
+      }, (scope: RecruitmentScope) => scope)
+    }
+    .width('100%')
   }
 
   @Builder
@@ -261,6 +319,7 @@ export struct CompetitionFeed {
           Text(`${this.posts().length} 条`).fontSize(12).fontColor(COLOR_MUTED)
         }
         .width('100%')
+        this.ScopeBar()
         this.FilterBar()
         this.List()
       }
