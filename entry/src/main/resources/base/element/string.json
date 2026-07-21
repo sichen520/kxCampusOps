@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "AI 高校机会履约与校园协作平台"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "可行 CampusOps 主应用"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "可行 CampusOps"
+    }
+  ]
+}

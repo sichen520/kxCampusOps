@@ -1,0 +1,229 @@
+import { RECRUITMENT_POSTS } from '../../../data/MockCampusData';
+import {
+  AccountRole,
+  ApplicationState,
+  DemoAccount,
+  RecruitmentKind,
+  RecruitmentPost
+} from '../../../domain/WorkflowModels';
+import { accountIdForDemoAccount, roleForDemoAccount } from '../../../domain/WorkflowRules';
+import { RecruitmentCard } from '../../home/components/RecruitmentCard';
+import { RecruitmentDetail } from '../../home/components/RecruitmentDetail';
+import {
+  COLOR_BLUE,
+  COLOR_BLUE_SOFT,
+  COLOR_BORDER,
+  COLOR_MUTED,
+  COLOR_SURFACE,
+  PAGE_MAX_WIDTH
+} from '../../../shared/Theme';
+
+@Component
+export struct ActivityFeed {
+  @Prop query: string = '';
+  @Prop isLoggedIn: boolean = false;
+  @Prop isWide: boolean = false;
+  @Prop demoAccount: DemoAccount = DemoAccount.STUDENT_APPLICANT;
+  @Prop extraPosts: RecruitmentPost[] = [];
+  @Prop applicationPostId: string = '';
+  @Prop applicationState: ApplicationState = ApplicationState.NONE;
+  @Prop applicationApplicantId: string = '';
+  @Prop applicationApplicantName: string = '';
+  @State selectedPostId: string = '';
+  @State activeFilter: string = '全部';
+  onRequireLogin: () => void = () => {};
+  onSubmitApplication: (postId: string) => void = (_postId: string) => {};
+  onApproveApplication: () => void = () => {};
+
+  private matchesFilter(post: RecruitmentPost): boolean {
+    if (this.activeFilter === '全部') {
+      return true;
+    }
+    if (this.activeFilter === '技术活动') {
+      return post.title.includes('开发') || post.requiredRole.includes('技术');
+    }
+    if (this.activeFilter === '志愿服务') {
+      return post.tags.indexOf('志愿服务') >= 0 || post.requiredRole.includes('签到');
+    }
+    return post.requiredRole.includes('协调') || post.requiredRole.includes('引导');
+  }
+
+  private posts(): RecruitmentPost[] {
+    const keyword: string = this.query.trim();
+    return RECRUITMENT_POSTS.concat(this.extraPosts).filter((post: RecruitmentPost) => {
+      const sameKind: boolean = post.kind === RecruitmentKind.ACTIVITY;
+      const matched: boolean = keyword.length === 0 || post.title.includes(keyword) ||
+        post.summary.includes(keyword) || post.requiredRole.includes(keyword) || post.publisher.includes(keyword);
+      return sameKind && matched && this.matchesFilter(post);
+    });
+  }
+
+  private applicationMatches(postId: string): boolean {
+    return this.applicationPostId === postId && this.applicationState !== ApplicationState.NONE;
+  }
+
+  private isCurrentApplicant(): boolean {
+    return this.applicationApplicantId === accountIdForDemoAccount(this.demoAccount);
+  }
+
+  private isResponsibleTeacher(postId: string): boolean {
+    if (this.demoAccount !== DemoAccount.TEACHER) {
+      return false;
+    }
+    return this.posts().filter((post: RecruitmentPost) =>
+      post.id === postId && post.createdBy === accountIdForDemoAccount(this.demoAccount)).length > 0;
+  }
+
+  private isStudentAccount(): boolean {
+    return roleForDemoAccount(this.demoAccount) === AccountRole.STUDENT;
+  }
+
+  private actionLabel(postId: string): string {
+    if (!this.isLoggedIn) {
+      return '报名岗位';
+    }
+    if (this.isStudentAccount()) {
+      if (this.applicationMatches(postId) && this.isCurrentApplicant() && this.applicationState === ApplicationState.PENDING) {
+        return '待老师审批';
+      }
+      if (this.applicationMatches(postId) && this.isCurrentApplicant() && this.applicationState === ApplicationState.APPROVED) {
+        return '报名已通过';
+      }
+      return '报名岗位';
+    }
+    if (this.demoAccount === DemoAccount.TEACHER && this.isResponsibleTeacher(postId)) {
+      if (this.applicationMatches(postId) && this.applicationState === ApplicationState.PENDING) {
+        return '审核报名';
+      }
+      if (this.applicationMatches(postId) && this.applicationState === ApplicationState.APPROVED) {
+        return '已批准';
+      }
+      return '本活动报名';
+    }
+    return '仅学生参与';
+  }
+
+  private actionDisabled(postId: string): boolean {
+    if (!this.isLoggedIn) {
+      return false;
+    }
+    if (this.isStudentAccount()) {
+      return this.applicationMatches(postId) && this.isCurrentApplicant();
+    }
+    if (this.demoAccount === DemoAccount.TEACHER && this.isResponsibleTeacher(postId)) {
+      return !this.applicationMatches(postId) || this.applicationState !== ApplicationState.PENDING;
+    }
+    return true;
+  }
+
+  private feedbackText(postId: string): string {
+    if (!this.applicationMatches(postId) || (!this.isResponsibleTeacher(postId) && !this.isCurrentApplicant())) {
+      return '';
+    }
+    if (this.demoAccount === DemoAccount.TEACHER && this.isResponsibleTeacher(postId)) {
+      return this.applicationState === ApplicationState.PENDING ?
+        `${this.applicationApplicantName}报名现场协助岗位，可投入活动完整时段。老师确认后学生才会进入活动执行名单。` :
+        `已批准${this.applicationApplicantName}参加活动，学生账号会收到报名通过状态。`;
+    }
+    return this.applicationState === ApplicationState.PENDING ?
+      '报名已提交给负责老师。切换到“刘老师 · 指导老师”账号可以继续演示审批。' :
+      '负责老师已批准报名，你已进入活动名单。';
+  }
+
+  private handleAction(post: RecruitmentPost): void {
+    if (!this.isLoggedIn) {
+      this.onRequireLogin();
+      return;
+    }
+    if (this.isStudentAccount()) {
+      this.onSubmitApplication(post.id);
+      this.selectedPostId = post.id;
+    } else if (this.demoAccount === DemoAccount.TEACHER && this.isResponsibleTeacher(post.id) &&
+      this.applicationMatches(post.id) && this.applicationState === ApplicationState.PENDING) {
+      this.onApproveApplication();
+      this.selectedPostId = post.id;
+    }
+  }
+
+  @Builder
+  FilterBar() {
+    Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
+      ForEach(['全部', '技术活动', '志愿服务', '现场协同'], (filter: string) => {
+        Button(filter)
+          .height(34)
+          .fontSize(12)
+          .fontColor(this.activeFilter === filter ? COLOR_BLUE : COLOR_MUTED)
+          .backgroundColor(this.activeFilter === filter ? COLOR_BLUE_SOFT : COLOR_SURFACE)
+          .border({ width: 1, color: this.activeFilter === filter ? COLOR_BLUE : COLOR_BORDER })
+          .borderRadius(4)
+          .margin({ right: 8, bottom: 8 })
+          .onClick(() => {
+            this.activeFilter = filter;
+          })
+      }, (filter: string) => filter)
+    }
+    .width('100%')
+  }
+
+  @Builder
+  Detail() {
+    ForEach(this.posts(), (post: RecruitmentPost) => {
+      if (post.id === this.selectedPostId) {
+        RecruitmentDetail({
+          post: post,
+          isWide: this.isWide,
+          actionLabel: this.actionLabel(post.id),
+          actionDisabled: this.actionDisabled(post.id),
+          feedbackLabel: this.isResponsibleTeacher(post.id) ? '报名审核' : '报名状态',
+          feedbackText: this.feedbackText(post.id),
+          onBack: () => {
+            this.selectedPostId = '';
+          },
+          onAction: () => {
+            this.handleAction(post);
+          }
+        })
+      }
+    }, (post: RecruitmentPost) => post.id)
+  }
+
+  build() {
+    Column({ space: 12 }) {
+      if (this.selectedPostId.length > 0) {
+        this.Detail()
+      } else {
+        Row() {
+          Text('校园活动岗位').fontSize(17).fontWeight(FontWeight.Bold).fontColor(COLOR_BLUE)
+          Blank()
+          Text(`${this.posts().length} 条`).fontSize(12).fontColor(COLOR_MUTED)
+        }
+        .width('100%')
+        this.FilterBar()
+        if (this.posts().length === 0) {
+          Text('没有匹配的校园活动').width('100%').padding(28).textAlign(TextAlign.Center).fontSize(14).fontColor(COLOR_MUTED)
+        } else {
+          Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.SpaceBetween }) {
+            ForEach(this.posts(), (post: RecruitmentPost) => {
+              RecruitmentCard({
+                post: post,
+                isWide: this.isWide,
+                actionLabel: this.actionLabel(post.id),
+                actionDisabled: this.actionDisabled(post.id),
+                onOpen: () => {
+                  this.selectedPostId = post.id;
+                },
+                onAction: () => {
+                  this.handleAction(post);
+                }
+              })
+            }, (post: RecruitmentPost) => post.id)
+          }
+          .width('100%')
+        }
+      }
+    }
+    .width('100%')
+    .constraintSize({ maxWidth: PAGE_MAX_WIDTH })
+    .padding({ left: this.isWide ? 28 : 18, right: this.isWide ? 28 : 18 })
+  }
+}

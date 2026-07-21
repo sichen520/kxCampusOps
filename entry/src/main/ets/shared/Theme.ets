@@ -1,0 +1,15 @@
+export const COLOR_BACKGROUND: string = '#F5F7F7';
+export const COLOR_SURFACE: string = '#FFFFFF';
+export const COLOR_SURFACE_ALT: string = '#EEF2F1';
+export const COLOR_TEXT: string = '#18211E';
+export const COLOR_MUTED: string = '#66716D';
+export const COLOR_BORDER: string = '#DDE4E1';
+export const COLOR_PRIMARY: string = '#087A62';
+export const COLOR_PRIMARY_SOFT: string = '#E2F3EE';
+export const COLOR_BLUE: string = '#315F8A';
+export const COLOR_BLUE_SOFT: string = '#E8F0F7';
+export const COLOR_AMBER: string = '#A35A12';
+export const COLOR_AMBER_SOFT: string = '#FFF0DA';
+export const COLOR_RED: string = '#A13E39';
+export const COLOR_RED_SOFT: string = '#FBEAE8';
+export const PAGE_MAX_WIDTH: number = 1200;

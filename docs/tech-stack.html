@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="可行 CampusOps 完整技术栈、架构分层与部署基线">
+  <title>可行 CampusOps · 技术架构基线</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3f6f7;
+      --surface: #ffffff;
+      --surface-soft: #eef3f4;
+      --surface-strong: #e3eaec;
+      --ink: #172126;
+      --muted: #607078;
+      --line: #d8e0e3;
+      --line-strong: #b9c7cb;
+      --green: #087f5b;
+      --green-soft: #dff3eb;
+      --blue: #1769aa;
+      --blue-soft: #e4f0f8;
+      --amber: #9a5b08;
+      --amber-soft: #faedcf;
+      --red: #b43c37;
+      --red-soft: #f8e6e3;
+      --violet: #6f4db7;
+      --violet-soft: #eee8f8;
+      --cyan: #117a83;
+      --cyan-soft: #dff1f2;
+      --shadow: 0 8px 28px rgba(23, 33, 38, 0.07);
+      --radius: 6px;
+      --sidebar: 236px;
+    }
+
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #101618;
+      --surface: #182023;
+      --surface-soft: #202b2f;
+      --surface-strong: #29363a;
+      --ink: #edf3f4;
+      --muted: #a6b5ba;
+      --line: #334247;
+      --line-strong: #4b5e64;
+      --green: #53d3a5;
+      --green-soft: #173c32;
+      --blue: #70b7eb;
+      --blue-soft: #19364a;
+      --amber: #f0bb5e;
+      --amber-soft: #463416;
+      --red: #ee8d87;
+      --red-soft: #482623;
+      --violet: #bba0ef;
+      --violet-soft: #322847;
+      --cyan: #70d3d9;
+      --cyan-soft: #193a3d;
+      --shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, "HarmonyOS Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      letter-spacing: 0;
+    }
+    button, input, select { font: inherit; letter-spacing: 0; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    a { color: inherit; }
+    svg { width: 18px; height: 18px; stroke-width: 1.8; }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: var(--sidebar) minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 24px 18px;
+      border-right: 1px solid var(--line);
+      background: var(--surface);
+      z-index: 20;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 30px;
+      text-decoration: none;
+    }
+    .brand-mark {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      border-radius: var(--radius);
+      background: var(--ink);
+      color: var(--surface);
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .brand-name { display: block; font-size: 14px; font-weight: 760; line-height: 1.25; }
+    .brand-meta { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+    .side-label {
+      margin: 20px 10px 8px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .side-nav { display: grid; gap: 4px; scrollbar-width: none; }
+    .side-nav::-webkit-scrollbar { display: none; }
+    .side-nav a {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-height: 42px;
+      padding: 9px 11px;
+      border-radius: var(--radius);
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 650;
+    }
+    .side-nav a:hover, .side-nav a:focus-visible {
+      background: var(--surface-soft);
+      color: var(--ink);
+      outline: none;
+    }
+    .side-nav a.active { background: var(--green-soft); color: var(--green); }
+    .side-foot {
+      position: absolute;
+      right: 18px;
+      bottom: 20px;
+      left: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .main, .content, .content-inner, .section { min-width: 0; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 15;
+      display: flex;
+      min-height: 68px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 12px clamp(20px, 4vw, 56px);
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--surface) 92%, transparent);
+      backdrop-filter: blur(14px);
+    }
+    .topbar-title { min-width: 0; }
+    .topbar-title strong { display: block; font-size: 15px; }
+    .topbar-title span { display: block; color: var(--muted); font-size: 12px; }
+    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+    .icon-btn {
+      display: inline-grid;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .icon-btn:hover, .icon-btn:focus-visible { border-color: var(--line-strong); background: var(--surface-soft); outline: none; }
+
+    .content { padding: 34px clamp(20px, 4vw, 56px) 64px; }
+    .content-inner { width: min(100%, 1440px); margin: 0 auto; }
+    section { scroll-margin-top: 90px; }
+    .section { margin-top: 52px; }
+    .section:first-child { margin-top: 0; }
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 22px;
+      margin-bottom: 18px;
+    }
+    .eyebrow { color: var(--green); font-size: 12px; font-weight: 760; margin: 0 0 5px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 8px; font-size: 30px; line-height: 1.25; }
+    h2 { margin-bottom: 5px; font-size: 22px; line-height: 1.3; }
+    h3 { margin-bottom: 5px; font-size: 15px; line-height: 1.35; }
+    .lead { max-width: 820px; margin-bottom: 0; color: var(--muted); font-size: 15px; }
+    .section-note { max-width: 720px; margin-bottom: 0; color: var(--muted); }
+
+    .status-line { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+    .status-chip, .tag {
+      display: inline-flex;
+      min-height: 25px;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .status-chip svg { width: 14px; height: 14px; }
+    .tag.phase-p0 { border-color: color-mix(in srgb, var(--green) 32%, var(--line)); color: var(--green); background: var(--green-soft); }
+    .tag.phase-p1 { border-color: color-mix(in srgb, var(--blue) 32%, var(--line)); color: var(--blue); background: var(--blue-soft); }
+    .tag.phase-p2 { border-color: color-mix(in srgb, var(--amber) 32%, var(--line)); color: var(--amber); background: var(--amber-soft); }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 26px;
+    }
+    .metric {
+      min-height: 118px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .metric-top { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 12px; }
+    .metric-top svg { color: var(--green); }
+    .metric-value { display: block; margin-top: 13px; font-size: 27px; line-height: 1; font-weight: 800; }
+    .metric-sub { display: block; margin-top: 7px; color: var(--muted); font-size: 11px; }
+
+    .architecture {
+      display: grid;
+      gap: 10px;
+      padding: 2px 0;
+    }
+    .arch-row {
+      display: grid;
+      grid-template-columns: 146px minmax(0, 1fr);
+      align-items: stretch;
+      gap: 10px;
+    }
+    .arch-label {
+      display: flex;
+      min-height: 76px;
+      align-items: center;
+      gap: 9px;
+      padding: 14px;
+      border-left: 4px solid var(--green);
+      background: var(--surface-strong);
+      font-weight: 750;
+    }
+    .arch-nodes {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .arch-node {
+      min-width: 0;
+      min-height: 76px;
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .arch-node strong { display: block; overflow-wrap: anywhere; }
+    .arch-node span { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; }
+    .arch-row:nth-child(2) .arch-label { border-left-color: var(--blue); }
+    .arch-row:nth-child(3) .arch-label { border-left-color: var(--red); }
+    .arch-row:nth-child(4) .arch-label { border-left-color: var(--amber); }
+    .arch-row:nth-child(5) .arch-label { border-left-color: var(--violet); }
+
+    .guardrail {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: start;
+      margin-top: 18px;
+      padding: 15px 17px;
+      border-left: 4px solid var(--amber);
+      background: var(--amber-soft);
+      color: color-mix(in srgb, var(--ink) 88%, var(--amber));
+    }
+    .guardrail p { margin: 0; }
+    .guardrail strong { display: block; margin-bottom: 2px; }
+
+    .catalog-toolbar {
+      position: sticky;
+      top: 80px;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) auto auto auto;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: color-mix(in srgb, var(--surface) 94%, transparent);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+    .search-box { position: relative; min-width: 0; }
+    .search-box svg { position: absolute; top: 50%; left: 12px; width: 16px; height: 16px; color: var(--muted); transform: translateY(-50%); pointer-events: none; }
+    .search-box input, .select-control {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink);
+      outline: none;
+    }
+    .search-box input { padding: 8px 12px 8px 38px; }
+    .select-control { min-width: 150px; padding: 7px 34px 7px 11px; }
+    .search-box input:focus, .select-control:focus { border-color: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 14%, transparent); }
+    .segmented {
+      display: inline-flex;
+      min-height: 40px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface-soft);
+    }
+    .segmented button {
+      min-width: 45px;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .segmented button.active { background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    .result-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 14px 0 10px; color: var(--muted); font-size: 12px; }
+    .reset-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 0;
+      background: transparent;
+      color: var(--green);
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .reset-btn svg { width: 15px; height: 15px; }
+
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .stack-card {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      min-width: 0;
+      min-height: 220px;
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-top: 3px solid var(--layer-color, var(--green));
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .stack-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .stack-title { display: flex; min-width: 0; align-items: center; gap: 10px; }
+    .stack-icon {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      place-items: center;
+      border-radius: var(--radius);
+      background: var(--layer-soft, var(--green-soft));
+      color: var(--layer-color, var(--green));
+    }
+    .stack-title h3 { margin: 0; overflow-wrap: anywhere; }
+    .version { margin-top: 3px; color: var(--muted); font-family: "Cascadia Code", Consolas, monospace; font-size: 11px; }
+    .stack-layer { margin: 14px 0 8px; color: var(--layer-color, var(--green)); font-size: 11px; font-weight: 750; }
+    .stack-purpose { margin-bottom: 14px; color: var(--muted); }
+    .stack-meta { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 11px; }
+    .stack-meta div { display: grid; grid-template-columns: 58px minmax(0,1fr); gap: 8px; }
+    .stack-meta dt { color: var(--muted); }
+    .stack-meta dd { margin: 0; overflow-wrap: anywhere; }
+    .empty-state { grid-column: 1 / -1; padding: 44px; border: 1px dashed var(--line-strong); text-align: center; color: var(--muted); }
+
+    .layer-client { --layer-color: var(--green); --layer-soft: var(--green-soft); }
+    .layer-backend { --layer-color: var(--blue); --layer-soft: var(--blue-soft); }
+    .layer-ai { --layer-color: var(--red); --layer-soft: var(--red-soft); }
+    .layer-data { --layer-color: var(--amber); --layer-soft: var(--amber-soft); }
+    .layer-admin { --layer-color: var(--cyan); --layer-soft: var(--cyan-soft); }
+    .layer-devops { --layer-color: var(--violet); --layer-soft: var(--violet-soft); }
+    .layer-quality { --layer-color: var(--cyan); --layer-soft: var(--cyan-soft); }
+    .layer-security { --layer-color: var(--red); --layer-soft: var(--red-soft); }
+
+    .deploy-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .deploy-lane {
+      min-height: 260px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .deploy-lane h3 { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+    .deploy-step {
+      position: relative;
+      display: grid;
+      grid-template-columns: 25px 1fr;
+      gap: 10px;
+      padding: 8px 0;
+    }
+    .deploy-step:not(:last-child)::after { content: ""; position: absolute; top: 34px; bottom: -8px; left: 12px; border-left: 1px solid var(--line-strong); }
+    .step-index { display: grid; width: 25px; height: 25px; place-items: center; border-radius: 50%; background: var(--surface-strong); color: var(--muted); font-size: 11px; font-weight: 800; z-index: 1; }
+    .deploy-step strong { display: block; }
+    .deploy-step span { display: block; color: var(--muted); font-size: 11px; }
+
+    .table-wrap { width: 100%; max-width: 100%; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { position: sticky; top: 0; background: var(--surface-soft); color: var(--muted); font-size: 11px; font-weight: 800; }
+    td { font-size: 12px; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: color-mix(in srgb, var(--surface-soft) 55%, transparent); }
+    .code { font-family: "Cascadia Code", Consolas, monospace; font-size: 11px; }
+
+    .decision-list { display: grid; gap: 1px; border: 1px solid var(--line); background: var(--line); }
+    .decision {
+      display: grid;
+      grid-template-columns: 170px 1fr 1fr;
+      gap: 18px;
+      padding: 16px;
+      background: var(--surface);
+    }
+    .decision strong { color: var(--green); }
+    .decision span { color: var(--muted); }
+
+    .footer { margin-top: 52px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+    .footer a { color: var(--green); text-decoration: none; }
+
+    @media (max-width: 1180px) {
+      .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stack-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .arch-nodes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .catalog-toolbar { grid-template-columns: 1fr auto auto; }
+      .catalog-toolbar .icon-btn { display: none; }
+    }
+
+    @media (max-width: 920px) {
+      .app-shell { grid-template-columns: minmax(0, 1fr); }
+      .sidebar { position: relative; width: 100%; height: auto; padding: 14px 18px; border-right: 0; border-bottom: 1px solid var(--line); }
+      .brand { margin-bottom: 10px; }
+      .brand-mark { width: 34px; height: 34px; }
+      .side-label, .side-foot { display: none; }
+      .side-nav { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 2px; }
+      .side-nav a { min-width: max-content; min-height: 36px; padding: 7px 10px; }
+      .topbar { top: 0; min-height: 60px; }
+      .catalog-toolbar { top: 72px; }
+      .deploy-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 680px) {
+      .content { padding: 24px 14px 44px; }
+      .topbar { padding: 10px 14px; }
+      .topbar-title span { display: none; }
+      h1 { font-size: 25px; }
+      h2 { font-size: 20px; }
+      .section { margin-top: 40px; }
+      .section-head { display: block; }
+      .metric-grid, .stack-grid { grid-template-columns: 1fr; }
+      .metric { min-height: 102px; }
+      .arch-row { grid-template-columns: 1fr; }
+      .arch-label { min-height: 48px; }
+      .arch-nodes { grid-template-columns: 1fr; }
+      .catalog-toolbar { position: static; grid-template-columns: 1fr; }
+      .select-control { min-width: 0; }
+      .segmented { width: 100%; }
+      .segmented button { flex: 1; }
+      .decision { grid-template-columns: 1fr; gap: 6px; }
+      .stack-card { min-height: 206px; }
+      th, td { min-width: 112px; }
+    }
+
+    @media print {
+      :root { --bg: #fff; --surface: #fff; --ink: #111; --muted: #555; --line: #ccc; --shadow: none; }
+      .sidebar, .topbar-actions, .catalog-toolbar, .reset-btn { display: none !important; }
+      .app-shell { display: block; }
+      .topbar { position: static; padding: 0 0 16px; background: #fff; }
+      .content { padding: 0; }
+      .stack-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stack-card, .metric, .deploy-lane { break-inside: avoid; box-shadow: none; }
+      section { break-before: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="页面导航">
+      <a class="brand" href="#overview">
+        <span class="brand-mark">KC</span>
+        <span>
+          <span class="brand-name">可行 CampusOps</span>
+          <span class="brand-meta">TECH BASELINE · V1.6</span>
+        </span>
+      </a>
+      <div class="side-label">架构文档</div>
+      <nav class="side-nav">
+        <a class="active" href="#overview"><i data-lucide="layout-dashboard"></i>总览</a>
+        <a href="#architecture"><i data-lucide="network"></i>系统架构</a>
+        <a href="#catalog"><i data-lucide="boxes"></i>技术目录</a>
+        <a href="#deployment"><i data-lucide="cloud-cog"></i>部署拓扑</a>
+        <a href="#matrix"><i data-lucide="table-2"></i>版本矩阵</a>
+        <a href="#decisions"><i data-lucide="git-branch"></i>架构决策</a>
+      </nav>
+      <div class="side-label">关联文档</div>
+      <nav class="side-nav">
+        <a href="./software-requirements-specification.md"><i data-lucide="file-check-2"></i>需求规格</a>
+        <a href="./product-functional-spec.md"><i data-lucide="file-text"></i>功能规格</a>
+      </nav>
+      <div class="side-foot">基线日期：2026-07-20<br>版本以项目锁文件与镜像摘要为准</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-title">
+          <strong>完整技术栈与部署架构</strong>
+          <span>从 HarmonyOS 终端到华为云生产环境</span>
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-btn" id="themeToggle" type="button" title="切换深浅色" aria-label="切换深浅色">
+            <i data-lucide="moon"></i>
+          </button>
+          <button class="icon-btn" id="printButton" type="button" title="打印或导出 PDF" aria-label="打印或导出 PDF">
+            <i data-lucide="printer"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="content-inner">
+          <section class="section" id="overview">
+            <p class="eyebrow">TECHNOLOGY BASELINE</p>
+            <h1>一套能演示，也能继续部署的工程栈</h1>
+            <p class="lead">客户端坚持 HarmonyOS 原生 ArkTS/ArkUI，服务端采用模块化单体并分离异步 Worker；AI、OCR 和向量模型全部经过 Provider 网关，数据、文件、权限和审计由平台掌控。</p>
+            <div class="status-line">
+              <span class="status-chip"><i data-lucide="badge-check"></i>HarmonyOS SDK 6.1.1(24)</span>
+              <span class="status-chip"><i data-lucide="server"></i>Node.js 24 LTS + NestJS 11</span>
+              <span class="status-chip"><i data-lucide="database"></i>PostgreSQL 16 + pgvector</span>
+              <span class="status-chip"><i data-lucide="cloud"></i>华为云首期生产部署</span>
+            </div>
+
+            <div class="metric-grid" aria-label="架构指标">
+              <article class="metric">
+                <div class="metric-top"><span>技术项</span><i data-lucide="boxes"></i></div>
+                <strong class="metric-value" id="metricTotal">0</strong>
+                <span class="metric-sub">覆盖客户端、服务、AI、数据、交付与治理</span>
+              </article>
+              <article class="metric">
+                <div class="metric-top"><span>P0 核心</span><i data-lucide="flag"></i></div>
+                <strong class="metric-value" id="metricP0">0</strong>
+                <span class="metric-sub">竞赛闭环必须进入首个可运行版本</span>
+              </article>
+              <article class="metric">
+                <div class="metric-top"><span>架构层</span><i data-lucide="layers-3"></i></div>
+                <strong class="metric-value" id="metricLayers">0</strong>
+                <span class="metric-sub">职责清晰，按层测试、部署与替换</span>
+              </article>
+              <article class="metric">
+                <div class="metric-top"><span>生产目标</span><i data-lucide="activity"></i></div>
+                <strong class="metric-value">99.5%</strong>
+                <span class="metric-sub">P1 月度可用性，RPO 1h / RTO 4h</span>
+              </article>
+            </div>
+          </section>
+
+          <section class="section" id="architecture">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">SYSTEM ARCHITECTURE</p>
+                <h2>系统分层</h2>
+              </div>
+              <p class="section-note">首期使用模块化单体控制复杂度，API、实时连接和异步任务在进程层分离。只有真实负载证明有必要时才拆分微服务。</p>
+            </div>
+
+            <div class="architecture" aria-label="系统架构图">
+              <div class="arch-row">
+                <div class="arch-label"><i data-lucide="monitor-smartphone"></i>体验终端</div>
+                <div class="arch-nodes">
+                  <div class="arch-node"><strong>HarmonyOS 手机</strong><span>扫描、报告、社区、任务、活动现场</span></div>
+                  <div class="arch-node"><strong>HarmonyOS 平板</strong><span>团队分析、项目看板、活动调度</span></div>
+                  <div class="arch-node"><strong>2in1</strong><span>申报材料、长文、文件与批量操作</span></div>
+                  <div class="arch-node"><strong>Vue 管理端</strong><span>组织、审核、机会、模型和审计</span></div>
+                </div>
+              </div>
+              <div class="arch-row">
+                <div class="arch-label"><i data-lucide="route"></i>接入与业务</div>
+                <div class="arch-nodes">
+                  <div class="arch-node"><strong>Nginx / TLS</strong><span>入口、静态资源、反向代理和限流</span></div>
+                  <div class="arch-node"><strong>NestJS API</strong><span>认证、机会、社区、协作、项目与活动</span></div>
+                  <div class="arch-node"><strong>Socket.IO</strong><span>通知、任务、活动和协作实时状态</span></div>
+                  <div class="arch-node"><strong>BullMQ Worker</strong><span>OCR、AI、文件处理、索引和通知补偿</span></div>
+                </div>
+              </div>
+              <div class="arch-row">
+                <div class="arch-label"><i data-lucide="brain-circuit"></i>AI 与检索</div>
+                <div class="arch-nodes">
+                  <div class="arch-node"><strong>AI Provider Gateway</strong><span>统一 VLM、LLM、Embedding 与降级</span></div>
+                  <div class="arch-node"><strong>华为云 OCR</strong><span>海报、截图、PDF 文字和版面提取</span></div>
+                  <div class="arch-node"><strong>RAG Pipeline</strong><span>规则引用、社区推荐和可追溯回答</span></div>
+                  <div class="arch-node"><strong>Schema Guard</strong><span>结构化输出校验、版本和人工修正</span></div>
+                </div>
+              </div>
+              <div class="arch-row">
+                <div class="arch-label"><i data-lucide="database"></i>数据与文件</div>
+                <div class="arch-nodes">
+                  <div class="arch-node"><strong>PostgreSQL 16</strong><span>业务数据、权限、版本和审计</span></div>
+                  <div class="arch-node"><strong>pgvector</strong><span>语义向量、相似内容和知识召回</span></div>
+                  <div class="arch-node"><strong>Redis + BullMQ</strong><span>缓存、队列、锁、限流与临时状态</span></div>
+                  <div class="arch-node"><strong>OBS / MinIO</strong><span>生产与开发环境对象存储</span></div>
+                </div>
+              </div>
+              <div class="arch-row">
+                <div class="arch-label"><i data-lucide="cloud-cog"></i>交付与治理</div>
+                <div class="arch-nodes">
+                  <div class="arch-node"><strong>Docker Compose</strong><span>本地、测试和竞赛演示一键环境</span></div>
+                  <div class="arch-node"><strong>ECS / RDS / DCS</strong><span>首期生产计算、数据库和缓存</span></div>
+                  <div class="arch-node"><strong>CodeArts / SWR</strong><span>持续集成、镜像仓库和发布</span></div>
+                  <div class="arch-node"><strong>LTS / Cloud Eye</strong><span>日志、指标、告警和故障定位</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="guardrail">
+              <i data-lucide="shield-alert"></i>
+              <p><strong>AI 边界</strong>模型只生成解析结果、匹配理由、任务草案和风险建议。资格判断必须引用原文；录取、分工、活动审批、版权处理和现场安全决策始终由有权限的人确认。</p>
+            </div>
+          </section>
+
+          <section class="section" id="catalog">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">STACK CATALOG</p>
+                <h2>技术目录</h2>
+              </div>
+              <p class="section-note">版本号是当前工程基线。初始化项目时写入锁文件，容器使用固定 tag 和镜像摘要，避免“latest”导致环境漂移。</p>
+            </div>
+
+            <div class="catalog-toolbar" role="search">
+              <label class="search-box">
+                <i data-lucide="search"></i>
+                <input id="stackSearch" type="search" placeholder="搜索技术、用途或部署位置" aria-label="搜索技术栈">
+              </label>
+              <select class="select-control" id="layerFilter" aria-label="按架构层筛选">
+                <option value="all">全部架构层</option>
+              </select>
+              <div class="segmented" aria-label="按阶段筛选">
+                <button class="active" type="button" data-phase="all">全部</button>
+                <button type="button" data-phase="P0">P0</button>
+                <button type="button" data-phase="P1">P1</button>
+                <button type="button" data-phase="P2">P2</button>
+              </div>
+              <button class="icon-btn" id="resetFilter" type="button" title="清除筛选" aria-label="清除筛选"><i data-lucide="rotate-ccw"></i></button>
+            </div>
+            <div class="result-bar">
+              <span id="resultCount">0 项技术</span>
+              <button class="reset-btn" id="resetFilterText" type="button"><i data-lucide="x"></i>清除筛选</button>
+            </div>
+            <div class="stack-grid" id="stackGrid" aria-live="polite"></div>
+          </section>
+
+          <section class="section" id="deployment">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">DELIVERY TOPOLOGY</p>
+                <h2>环境与部署路径</h2>
+              </div>
+              <p class="section-note">三套环境使用同一组配置结构和数据库迁移，差异通过环境变量、密钥服务和 Provider 配置注入。</p>
+            </div>
+            <div class="deploy-grid">
+              <article class="deploy-lane">
+                <h3><i data-lucide="laptop"></i>本地开发</h3>
+                <div class="deploy-step"><span class="step-index">1</span><div><strong>DevEco + Node.js</strong><span>HarmonyOS 客户端与 NestJS 服务热更新</span></div></div>
+                <div class="deploy-step"><span class="step-index">2</span><div><strong>Docker Compose</strong><span>PostgreSQL、Redis、MinIO 和本地依赖</span></div></div>
+                <div class="deploy-step"><span class="step-index">3</span><div><strong>Provider Sandbox</strong><span>受控 OCR/AI 测试额度与模拟回包</span></div></div>
+              </article>
+              <article class="deploy-lane">
+                <h3><i data-lucide="presentation"></i>竞赛演示</h3>
+                <div class="deploy-step"><span class="step-index">1</span><div><strong>固定演示数据</strong><span>账号、机会、社区、项目和活动一键初始化</span></div></div>
+                <div class="deploy-step"><span class="step-index">2</span><div><strong>Compose 单机环境</strong><span>API、Worker、数据库、缓存和文件可复现</span></div></div>
+                <div class="deploy-step"><span class="step-index">3</span><div><strong>云端 AI + 降级</strong><span>超时可切换预置结果，不阻断主流程</span></div></div>
+              </article>
+              <article class="deploy-lane">
+                <h3><i data-lucide="building-2"></i>华为云生产</h3>
+                <div class="deploy-step"><span class="step-index">1</span><div><strong>SWR + ECS</strong><span>固定镜像、健康检查、滚动发布与回滚</span></div></div>
+                <div class="deploy-step"><span class="step-index">2</span><div><strong>RDS + DCS + OBS</strong><span>托管数据库、缓存队列和对象存储</span></div></div>
+                <div class="deploy-step"><span class="step-index">3</span><div><strong>LTS + Cloud Eye</strong><span>日志、指标、告警、备份和恢复演练</span></div></div>
+              </article>
+            </div>
+          </section>
+
+          <section class="section" id="matrix">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">VERSION MATRIX</p>
+                <h2>版本与职责矩阵</h2>
+              </div>
+              <p class="section-note">表格与上方目录由同一数据源生成，筛选不会影响这里的完整基线。</p>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>技术</th><th>版本基线</th><th>架构层</th><th>阶段</th><th>部署位置</th><th>职责</th></tr>
+                </thead>
+                <tbody id="versionTable"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="section" id="decisions">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">ARCHITECTURE DECISIONS</p>
+                <h2>关键技术决策</h2>
+              </div>
+            </div>
+            <div class="decision-list">
+              <div class="decision"><strong>原生 HarmonyOS</strong><span>使用 ArkTS、ArkUI 和 Stage 模型，不用 WebView 套壳承担主体验。</span><span>确保多设备布局、接续、服务卡片和实况窗真正进入作品能力。</span></div>
+              <div class="decision"><strong>模块化单体优先</strong><span>业务域在代码层隔离，API 与 Worker 分进程，不提前拆微服务。</span><span>降低竞赛阶段部署、调试和事务一致性成本，保留后续拆分空间。</span></div>
+              <div class="decision"><strong>PostgreSQL 统一数据</strong><span>关系数据、全文检索与 pgvector 共用一个可靠数据平台。</span><span>P0/P1 不额外引入 Elasticsearch，减少运维面。</span></div>
+              <div class="decision"><strong>AI Provider 可替换</strong><span>VLM、文本模型、Embedding 和 OCR 均通过网关与结构化协议接入。</span><span>支持成本控制、故障切换、模型评测与避免供应商锁定。</span></div>
+              <div class="decision"><strong>对象存储双实现</strong><span>本地与演示使用 MinIO，生产使用 OBS，业务只依赖统一存储接口。</span><span>开发可复现，生产获得托管可靠性和生命周期能力。</span></div>
+              <div class="decision"><strong>人工确认优先</strong><span>关键 AI 输出先成为草稿或待确认结果，不直接改变业务责任。</span><span>避免误判直接影响报名、组队、分工、审批和现场处置。</span></div>
+            </div>
+          </section>
+
+          <footer class="footer">
+            可行 CampusOps 技术架构基线 V1.6 · 关联 <a href="./software-requirements-specification.md">软件需求规格说明书</a> 与 <a href="./product-functional-spec.md">产品功能规格</a> · Lucide icons，ISC License
+          </footer>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="./assets/lucide.min.js"></script>
+  <script>
+    const layerMeta = {
+      client: { label: 'HarmonyOS 客户端', icon: 'smartphone' },
+      backend: { label: '业务服务', icon: 'server' },
+      ai: { label: 'AI 与检索', icon: 'brain-circuit' },
+      data: { label: '数据与文件', icon: 'database' },
+      admin: { label: '管理后台', icon: 'panel-top' },
+      devops: { label: '云与交付', icon: 'cloud-cog' },
+      quality: { label: '测试与观测', icon: 'test-tube-2' },
+      security: { label: '安全治理', icon: 'shield-check' }
+    };
+
+    const stackData = [
+      { name: 'DevEco Studio', version: '6.1.1 Release (6.1.1.280)', layer: 'client', phase: 'P0', purpose: 'HarmonyOS 工程创建、ArkTS 开发、预览、调试、签名和构建。', deploy: '开发工作站', role: '主 IDE' },
+      { name: 'HarmonyOS SDK', version: '6.1.1(24)', layer: 'client', phase: 'P0', purpose: '统一应用 API 基线，覆盖 Phone、Tablet 与 2in1。', deploy: '客户端构建环境', role: '平台 SDK' },
+      { name: 'ArkTS', version: 'SDK 内置 / strict', layer: 'client', phase: 'P0', purpose: '客户端业务、状态、领域模型和平台能力开发语言。', deploy: 'HarmonyOS 端', role: '开发语言' },
+      { name: 'ArkUI', version: 'SDK 内置', layer: 'client', phase: 'P0', purpose: '声明式界面、响应式布局、组件和多设备适配。', deploy: 'HarmonyOS 端', role: 'UI 框架' },
+      { name: 'Stage Model + UIAbility', version: 'SDK 内置', layer: 'client', phase: 'P0', purpose: '应用生命周期、窗口与页面入口的标准模型。', deploy: 'HarmonyOS 端', role: '应用模型' },
+      { name: 'State Management V2', version: 'SDK 内置', layer: 'client', phase: 'P0', purpose: '页面与组件响应式状态，减少手工同步。', deploy: 'HarmonyOS 端', role: '状态管理' },
+      { name: 'Navigation + NavPathStack', version: 'SDK 内置', layer: 'client', phase: 'P0', purpose: '模块路由、深链、返回栈与跨设备上下文恢复。', deploy: 'HarmonyOS 端', role: '页面导航' },
+      { name: 'relationalStore', version: 'SDK 内置', layer: 'client', phase: 'P0', purpose: '离线草稿、待办、缓存元数据和弱网补偿。', deploy: 'HarmonyOS 本地', role: '本地关系存储' },
+      { name: 'Preferences', version: 'SDK 内置', layer: 'client', phase: 'P0', purpose: '主题、通知偏好、筛选和轻量配置。', deploy: 'HarmonyOS 本地', role: '键值配置' },
+      { name: 'HTTP + WebSocket', version: '系统网络 API', layer: 'client', phase: 'P0', purpose: 'REST 请求、上传下载和项目/活动实时状态。', deploy: 'HarmonyOS 端', role: '网络通信' },
+      { name: '应用接续', version: 'HarmonyOS 分布式能力', layer: 'client', phase: 'P0', purpose: '手机扫描后可在平板或 PC/2in1 继续核对与编辑。', deploy: '多设备', role: '跨端协同' },
+      { name: '服务卡片', version: 'SDK 内置', layer: 'client', phase: 'P0', purpose: '桌面展示下一行动、最近截止和当前岗位。', deploy: 'HarmonyOS 桌面', role: '轻量入口' },
+      { name: '实况窗', version: 'SDK 内置', layer: 'client', phase: 'P1', purpose: '展示报名进度、活动倒计时和关键任务状态。', deploy: 'HarmonyOS 系统界面', role: '实时状态' },
+      { name: 'Push Kit', version: '华为开放能力', layer: 'client', phase: 'P0', purpose: '截止、审核、任务、申请和活动变更推送。', deploy: '终端 + 华为云', role: '推送通知' },
+      { name: 'Scan Kit', version: '华为开放能力', layer: 'client', phase: 'P0', purpose: '机会二维码、活动签到和文档采集入口。', deploy: 'HarmonyOS 端', role: '扫描能力' },
+      { name: 'Hvigor + ohpm', version: 'SDK 工具链', layer: 'client', phase: 'P0', purpose: '模块构建、依赖管理、测试与 HAP/HAR 产物。', deploy: '构建环境', role: '构建与包管理' },
+      { name: 'Hypium + Hamock', version: 'SDK 配套', layer: 'client', phase: 'P0', purpose: 'ArkTS 单元测试、组件测试与依赖替身。', deploy: '本地 + CI', role: '客户端测试' },
+      { name: 'DevEco Testing', version: '稳定版', layer: 'client', phase: 'P1', purpose: '兼容性、稳定性、性能与多设备测试。', deploy: '测试环境', role: '设备验证' },
+
+      { name: 'Node.js', version: '24 LTS', layer: 'backend', phase: 'P0', purpose: '业务 API、实时服务、Worker 和工具脚本运行时。', deploy: 'ECS / 容器', role: '服务端运行时' },
+      { name: 'NestJS', version: '11.x', layer: 'backend', phase: 'P0', purpose: '认证、机会、社区、协作、项目、活动和后台 API。', deploy: 'API / Worker 容器', role: '服务端框架' },
+      { name: 'TypeScript', version: '5.x', layer: 'backend', phase: 'P0', purpose: '服务端、管理端和共享契约的静态类型语言。', deploy: '构建与服务端', role: '开发语言' },
+      { name: '模块化单体', version: '领域模块 + 分进程', layer: 'backend', phase: 'P0', purpose: '代码按业务域隔离，API、Worker、Socket 独立扩容。', deploy: 'ECS / 容器', role: '架构模式' },
+      { name: 'TypeORM', version: '0.3.x', layer: 'backend', phase: 'P0', purpose: '实体映射、事务、Repository 和数据库迁移。', deploy: 'API / Worker', role: 'ORM' },
+      { name: 'OpenAPI + Swagger', version: 'OpenAPI 3.1', layer: 'backend', phase: 'P0', purpose: '接口契约、调试、客户端联调和回归基线。', deploy: 'API 服务', role: '接口规范' },
+      { name: 'Socket.IO', version: '4.x', layer: 'backend', phase: 'P0', purpose: '项目、活动、通知和在线状态实时同步。', deploy: '实时服务容器', role: '实时通信' },
+      { name: 'BullMQ', version: '5.x', layer: 'backend', phase: 'P0', purpose: 'OCR、AI、索引、文件处理和通知补偿异步任务。', deploy: 'Worker + Redis', role: '任务队列' },
+      { name: 'class-validator', version: '0.14.x', layer: 'backend', phase: 'P0', purpose: '请求 DTO 与业务输入边界校验。', deploy: 'API 服务', role: '数据校验' },
+      { name: 'Pino', version: '9.x', layer: 'backend', phase: 'P0', purpose: '高性能结构化日志和请求关联。', deploy: '全部 Node 服务', role: '日志' },
+      { name: 'Huawei Account Kit', version: '开放能力', layer: 'backend', phase: 'P0', purpose: '华为账号身份交换与平台账号绑定。', deploy: '客户端 + API', role: '第三方身份' },
+      { name: 'JWT + Refresh Token', version: '短期访问 / 可撤销刷新', layer: 'backend', phase: 'P0', purpose: '多设备会话、令牌轮换、下线和接口认证。', deploy: 'API + Redis', role: '会话认证' },
+      { name: 'REST + WebSocket 契约', version: '版本化 /api/v1', layer: 'backend', phase: 'P0', purpose: '读写接口与实时事件分工，统一错误码和幂等键。', deploy: '客户端与服务边界', role: '通信协议' },
+
+      { name: 'AI Provider Gateway', version: '平台自研接口层', layer: 'ai', phase: 'P0', purpose: '统一模型鉴权、超时、重试、熔断、成本和供应商切换。', deploy: 'Worker / API', role: '模型网关' },
+      { name: '华为云 OCR', version: '云服务 API', layer: 'ai', phase: 'P0', purpose: '海报、截图、通知和 PDF 的文字与版面提取。', deploy: '华为云', role: '文档识别' },
+      { name: 'VLM Provider', version: '可插拔', layer: 'ai', phase: 'P0', purpose: '复杂海报、表格和截图中的结构与视觉信息理解。', deploy: '外部模型服务', role: '视觉理解' },
+      { name: 'Text LLM Provider', version: '可插拔', layer: 'ai', phase: 'P0', purpose: '资格推理、行动路线、任务草案、摘要和解释。', deploy: '外部模型服务', role: '文本推理' },
+      { name: 'Embedding Provider', version: '可插拔', layer: 'ai', phase: 'P1', purpose: '社区内容、机会和技能标签的向量表示。', deploy: '外部/自托管模型', role: '向量化' },
+      { name: 'RAG Pipeline', version: '平台实现', layer: 'ai', phase: 'P0', purpose: '官方规则引用、社区内容召回、来源排序和答案约束。', deploy: 'Worker / API', role: '检索增强' },
+      { name: 'JSON Schema + Ajv', version: 'Draft 2020-12 / 8.x', layer: 'ai', phase: 'P0', purpose: '校验 AI 结构化结果，阻止无效字段进入业务库。', deploy: 'Worker / API', role: '输出约束' },
+      { name: 'Prompt & Eval Registry', version: '平台实现', layer: 'ai', phase: 'P1', purpose: '提示词版本、评测集、反馈、成本和回归结果管理。', deploy: 'API + PostgreSQL', role: '模型治理' },
+
+      { name: 'PostgreSQL', version: '16', layer: 'data', phase: 'P0', purpose: '用户、机会、社区、协作、项目、活动、权限和审计主库。', deploy: '本地容器 / 华为云 RDS', role: '关系数据库' },
+      { name: 'pgvector', version: '0.8.x', layer: 'data', phase: 'P1', purpose: '语义向量、相似内容和知识检索索引。', deploy: 'PostgreSQL 扩展', role: '向量存储' },
+      { name: 'PostgreSQL FTS + pg_trgm', version: '16 内置 + 扩展', layer: 'data', phase: 'P0', purpose: '应用侧中文分词写入 tsvector，pg_trgm 补充短词与模糊匹配，覆盖标题、正文和标签基础检索。', deploy: 'PostgreSQL + 索引 Worker', role: '中文全文检索' },
+      { name: 'Redis', version: '7.x', layer: 'data', phase: 'P0', purpose: '缓存、队列、分布式锁、限流、会话和短期状态。', deploy: '本地容器 / 华为云 DCS', role: '缓存与队列底座' },
+      { name: 'Huawei Cloud OBS', version: '托管服务', layer: 'data', phase: 'P1', purpose: '生产资源包、机会原件、交付物和预览文件存储。', deploy: '华为云', role: '生产对象存储' },
+      { name: 'MinIO', version: '固定镜像摘要', layer: 'data', phase: 'P0', purpose: '开发和竞赛演示环境的 S3 兼容对象存储。', deploy: 'Docker Compose', role: '本地对象存储' },
+      { name: '数据库迁移', version: 'TypeORM migrations', layer: 'data', phase: 'P0', purpose: '版本化表结构、索引、初始化数据和可回滚发布。', deploy: 'CI/CD 发布任务', role: 'Schema 管理' },
+
+      { name: 'Vue', version: '3.5+', layer: 'admin', phase: 'P0', purpose: '平台管理、审核、组织、机会、AI 和统计界面。', deploy: '管理 Web 端', role: '前端框架' },
+      { name: 'Vite', version: '7.x', layer: 'admin', phase: 'P0', purpose: '管理端开发服务器、构建和资源优化。', deploy: '开发 + CI', role: '构建工具' },
+      { name: 'Pinia', version: '3.x', layer: 'admin', phase: 'P0', purpose: '登录会话、筛选、权限和跨页状态。', deploy: '浏览器', role: '状态管理' },
+      { name: 'Arco Design Vue', version: '2.x', layer: 'admin', phase: 'P0', purpose: '后台表格、表单、审核、筛选、弹窗和反馈组件。', deploy: '浏览器', role: '管理端组件库' },
+      { name: 'Axios', version: '1.x', layer: 'admin', phase: 'P0', purpose: '管理端 HTTP 请求、令牌刷新、错误和取消处理。', deploy: '浏览器', role: 'HTTP 客户端' },
+
+      { name: 'Docker Engine', version: '27+', layer: 'devops', phase: 'P0', purpose: '统一 API、Worker、管理端和依赖服务运行环境。', deploy: '开发 / 演示 / ECS', role: '容器运行时' },
+      { name: 'Docker Compose', version: 'v2', layer: 'devops', phase: 'P0', purpose: '本地和演示环境一键启动、健康检查与数据卷。', deploy: '开发 / 演示', role: '环境编排' },
+      { name: 'Nginx', version: '稳定版', layer: 'devops', phase: 'P1', purpose: 'TLS 终止、反向代理、管理端静态资源和基础限流。', deploy: 'ECS / 网关层', role: '流量入口' },
+      { name: 'Huawei Cloud ECS', version: '托管 IaaS', layer: 'devops', phase: 'P1', purpose: '首期生产 API、Worker、Socket 和 Nginx 计算资源。', deploy: '华为云', role: '生产计算' },
+      { name: 'Huawei Cloud RDS', version: 'PostgreSQL 16', layer: 'devops', phase: 'P1', purpose: '托管数据库、高可用、备份和恢复。', deploy: '华为云', role: '生产数据库' },
+      { name: 'Huawei Cloud DCS', version: 'Redis 7', layer: 'devops', phase: 'P1', purpose: '托管缓存、队列、会话与限流数据。', deploy: '华为云', role: '生产 Redis' },
+      { name: 'Huawei Cloud SWR', version: '托管服务', layer: 'devops', phase: 'P1', purpose: '版本化容器镜像、扫描和部署拉取。', deploy: '华为云', role: '镜像仓库' },
+      { name: 'CodeArts Pipeline', version: '托管服务', layer: 'devops', phase: 'P1', purpose: '检查、测试、构建、镜像、迁移、发布和回滚流水线。', deploy: '华为云', role: 'CI/CD' },
+      { name: 'Huawei Cloud CCE', version: '按规模启用', layer: 'devops', phase: 'P2', purpose: '达到明确扩容需求后承载容器编排与弹性。', deploy: '华为云', role: 'Kubernetes' },
+
+      { name: 'Jest', version: '30.x', layer: 'quality', phase: 'P0', purpose: 'NestJS 领域服务、权限、状态机和 Worker 单元测试。', deploy: '本地 + CI', role: '单元测试' },
+      { name: 'Supertest', version: '7.x', layer: 'quality', phase: 'P0', purpose: 'REST 接口、认证、权限和错误契约集成测试。', deploy: 'CI 测试环境', role: 'API 测试' },
+      { name: 'Playwright', version: '稳定版锁定', layer: 'quality', phase: 'P0', purpose: '管理端关键流程、响应式页面和截图回归。', deploy: '本地 + CI', role: '端到端测试' },
+      { name: 'k6', version: '稳定版锁定', layer: 'quality', phase: 'P1', purpose: 'API、搜索、上传和实时场景容量基准。', deploy: '性能测试环境', role: '负载测试' },
+      { name: 'OpenTelemetry', version: '1.x 兼容', layer: 'quality', phase: 'P1', purpose: '请求、队列、数据库和外部 AI 调用链路追踪。', deploy: '全部服务', role: '可观测性标准' },
+      { name: 'Huawei Cloud LTS', version: '托管服务', layer: 'quality', phase: 'P1', purpose: '集中结构化日志、检索、保留和告警。', deploy: '华为云', role: '日志平台' },
+      { name: 'Huawei Cloud Eye', version: '托管服务', layer: 'quality', phase: 'P1', purpose: '基础设施与应用指标、仪表盘和告警。', deploy: '华为云', role: '监控告警' },
+
+      { name: 'RBAC + 对象级权限', version: 'NestJS Guards / Policies', layer: 'security', phase: 'P0', purpose: '角色、所有者、组织和可见范围联合授权。', deploy: 'API 服务', role: '访问控制' },
+      { name: 'TLS', version: '1.2+', layer: 'security', phase: 'P0', purpose: '客户端、管理端、API 和对象存储传输加密，所有可公开访问环境必须启用。', deploy: '云入口 / Nginx', role: '传输安全' },
+      { name: '@nestjs/throttler', version: '6.x', layer: 'security', phase: 'P0', purpose: '登录、搜索、AI、上传和公开接口速率限制。', deploy: 'API + Redis', role: '防滥用' },
+      { name: 'ClamAV', version: '固定镜像摘要', layer: 'security', phase: 'P0', purpose: '上传资源、压缩包和交付文件在审核、预览或下载前完成恶意内容扫描与隔离。', deploy: '安全扫描 Worker', role: '文件安全' },
+      { name: 'Trivy', version: '稳定版锁定', layer: 'security', phase: 'P1', purpose: '依赖、文件系统和容器镜像漏洞扫描。', deploy: 'CI/CD', role: '供应链安全' },
+      { name: 'Huawei Cloud DEW/KMS', version: '托管服务', layer: 'security', phase: 'P1', purpose: '生产密钥、敏感配置和加密材料托管与轮换。', deploy: '华为云', role: '密钥管理' },
+      { name: '审计日志', version: '平台实现', layer: 'security', phase: 'P0', purpose: '权限、审核、导出、AI、关键修改和登录事件追溯。', deploy: 'PostgreSQL + LTS', role: '安全审计' }
+    ];
+
+    const grid = document.getElementById('stackGrid');
+    const tableBody = document.getElementById('versionTable');
+    const searchInput = document.getElementById('stackSearch');
+    const layerFilter = document.getElementById('layerFilter');
+    const phaseButtons = Array.from(document.querySelectorAll('[data-phase]'));
+    const resultCount = document.getElementById('resultCount');
+    let selectedPhase = 'all';
+
+    const escapeHtml = (value) => String(value).replace(/[&<>'"]/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    })[char]);
+
+    function populateLayerFilter() {
+      Object.entries(layerMeta).forEach(([value, meta]) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = meta.label;
+        layerFilter.appendChild(option);
+      });
+    }
+
+    function phaseTag(phase) {
+      return `<span class="tag phase-${phase.toLowerCase()}">${phase}</span>`;
+    }
+
+    function renderCards() {
+      const query = searchInput.value.trim().toLowerCase();
+      const layer = layerFilter.value;
+      const filtered = stackData.filter(item => {
+        const haystack = `${item.name} ${item.version} ${item.purpose} ${item.deploy} ${item.role} ${layerMeta[item.layer].label}`.toLowerCase();
+        return (selectedPhase === 'all' || item.phase === selectedPhase)
+          && (layer === 'all' || item.layer === layer)
+          && (!query || haystack.includes(query));
+      });
+
+      resultCount.textContent = `显示 ${filtered.length} / ${stackData.length} 项技术`;
+      if (!filtered.length) {
+        grid.innerHTML = '<div class="empty-state"><strong>没有匹配项</strong><br>尝试更换关键词、阶段或架构层。</div>';
+        return;
+      }
+
+      grid.innerHTML = filtered.map(item => {
+        const meta = layerMeta[item.layer];
+        return `<article class="stack-card layer-${item.layer}">
+          <div class="stack-card-head">
+            <div class="stack-title">
+              <span class="stack-icon"><i data-lucide="${meta.icon}"></i></span>
+              <div><h3>${escapeHtml(item.name)}</h3><div class="version">${escapeHtml(item.version)}</div></div>
+            </div>
+            ${phaseTag(item.phase)}
+          </div>
+          <div class="stack-layer">${escapeHtml(meta.label)}</div>
+          <p class="stack-purpose">${escapeHtml(item.purpose)}</p>
+          <dl class="stack-meta">
+            <div><dt>部署</dt><dd>${escapeHtml(item.deploy)}</dd></div>
+            <div><dt>职责</dt><dd>${escapeHtml(item.role)}</dd></div>
+          </dl>
+        </article>`;
+      }).join('');
+      window.lucide?.createIcons();
+    }
+
+    function renderVersionTable() {
+      tableBody.innerHTML = stackData.map(item => `<tr>
+        <td><strong>${escapeHtml(item.name)}</strong></td>
+        <td class="code">${escapeHtml(item.version)}</td>
+        <td>${escapeHtml(layerMeta[item.layer].label)}</td>
+        <td>${phaseTag(item.phase)}</td>
+        <td>${escapeHtml(item.deploy)}</td>
+        <td>${escapeHtml(item.role)}</td>
+      </tr>`).join('');
+    }
+
+    function resetFilters() {
+      searchInput.value = '';
+      layerFilter.value = 'all';
+      selectedPhase = 'all';
+      phaseButtons.forEach(button => button.classList.toggle('active', button.dataset.phase === 'all'));
+      renderCards();
+    }
+
+    function updateMetrics() {
+      document.getElementById('metricTotal').textContent = stackData.length;
+      document.getElementById('metricP0').textContent = stackData.filter(item => item.phase === 'P0').length;
+      document.getElementById('metricLayers').textContent = Object.keys(layerMeta).length;
+    }
+
+    searchInput.addEventListener('input', renderCards);
+    layerFilter.addEventListener('change', renderCards);
+    phaseButtons.forEach(button => button.addEventListener('click', () => {
+      selectedPhase = button.dataset.phase;
+      phaseButtons.forEach(item => item.classList.toggle('active', item === button));
+      renderCards();
+    }));
+    document.getElementById('resetFilter').addEventListener('click', resetFilters);
+    document.getElementById('resetFilterText').addEventListener('click', resetFilters);
+    document.getElementById('printButton').addEventListener('click', () => window.print());
+
+    const themeToggle = document.getElementById('themeToggle');
+    const storedTheme = localStorage.getItem('kc-tech-theme');
+    if (storedTheme === 'dark') document.documentElement.dataset.theme = 'dark';
+    function updateThemeIcon() {
+      const isDark = document.documentElement.dataset.theme === 'dark';
+      themeToggle.innerHTML = `<i data-lucide="${isDark ? 'sun' : 'moon'}"></i>`;
+      window.lucide?.createIcons();
+    }
+    themeToggle.addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem('kc-tech-theme', next);
+      updateThemeIcon();
+    });
+
+    const sections = Array.from(document.querySelectorAll('main section[id]'));
+    const navLinks = Array.from(document.querySelectorAll('.side-nav a[href^="#"]'));
+    const observer = new IntersectionObserver(entries => {
+      const visible = entries.filter(entry => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      navLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === `#${visible.target.id}`));
+    }, { rootMargin: '-20% 0px -70% 0px', threshold: [0, 0.1, 0.5] });
+    sections.forEach(section => observer.observe(section));
+
+    populateLayerFilter();
+    updateMetrics();
+    renderCards();
+    renderVersionTable();
+    updateThemeIcon();
+    window.lucide?.createIcons();
+  </script>
+</body>
+</html>
