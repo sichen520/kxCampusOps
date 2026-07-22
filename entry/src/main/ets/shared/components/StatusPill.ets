@@ -6,11 +6,11 @@ export struct StatusPill {
 
   build() {
     Text(this.text)
-      .fontSize(11)
+      .fontSize(12)
       .fontWeight(FontWeight.Medium)
       .fontColor(this.textColor)
       .backgroundColor(this.fillColor)
       .borderRadius(3)
-      .padding({ left: 7, right: 7, top: 4, bottom: 4 })
+      .padding({ left: 7, right: 7, top: 3, bottom: 3 })
   }
 }

@@ -149,7 +149,7 @@ export struct KnowledgePage {
       Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
         ForEach(['全部主题'].concat(RESOURCE_CATEGORIES), (category: string) => {
           Button(category)
-            .height(32).fontSize(11)
+            .height(34).fontSize(12)
             .fontColor(this.selectedCategory === category ? COLOR_PRIMARY : COLOR_MUTED)
             .backgroundColor(this.selectedCategory === category ? COLOR_PRIMARY_SOFT : COLOR_SURFACE)
             .border({ width: 1, color: this.selectedCategory === category ? COLOR_PRIMARY : COLOR_BORDER })
@@ -163,7 +163,7 @@ export struct KnowledgePage {
       Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
         ForEach(['全部类型'].concat(RESOURCE_TYPES), (type: string) => {
           Button(type)
-            .height(32).fontSize(11)
+            .height(34).fontSize(12)
             .fontColor(this.selectedType === type ? COLOR_PRIMARY : COLOR_MUTED)
             .backgroundColor(this.selectedType === type ? COLOR_PRIMARY_SOFT : COLOR_SURFACE)
             .border({ width: 1, color: this.selectedType === type ? COLOR_PRIMARY : COLOR_BORDER })
@@ -242,7 +242,8 @@ export struct KnowledgePage {
           PageTitle({
             eyebrow: '知享 · 校园知识社区',
             title: this.isWide ? '资源库与技术讨论' : '知享',
-            description: '按主题和资料类型查找同学分享的课件、笔记、源码与经验，也可以进入讨论继续交流。'
+            description: '按主题和资料类型查找同学分享的课件、笔记、源码与经验，也可以进入讨论继续交流。',
+            compact: !this.isWide
           })
           if (this.showComposer) {
             KnowledgeComposer({

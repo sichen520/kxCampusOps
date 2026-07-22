@@ -192,9 +192,12 @@ export struct ActivityFeed {
           .fontWeight(this.effectiveScope() === scope ? FontWeight.Bold : FontWeight.Medium)
           .fontColor(this.effectiveScope() === scope ? '#FFFFFF' : COLOR_BLUE)
           .backgroundColor(this.effectiveScope() === scope ? COLOR_BLUE : COLOR_BLUE_SOFT)
-          .borderRadius(4)
+          .borderRadius(6)
+          .animation({ duration: 180, curve: Curve.EaseOut })
           .onClick(() => {
-            this.activeScope = scope;
+            this.getUIContext().animateTo({ duration: 180, curve: Curve.EaseOut }, () => {
+              this.activeScope = scope;
+            });
           })
       }, (scope: RecruitmentScope) => scope)
     }
@@ -211,10 +214,13 @@ export struct ActivityFeed {
           .fontColor(this.activeFilter === filter ? COLOR_BLUE : COLOR_MUTED)
           .backgroundColor(this.activeFilter === filter ? COLOR_BLUE_SOFT : COLOR_SURFACE)
           .border({ width: 1, color: this.activeFilter === filter ? COLOR_BLUE : COLOR_BORDER })
-          .borderRadius(4)
+          .borderRadius(6)
           .margin({ right: 8, bottom: 8 })
+          .animation({ duration: 160, curve: Curve.EaseOut })
           .onClick(() => {
-            this.activeFilter = filter;
+            this.getUIContext().animateTo({ duration: 160, curve: Curve.EaseOut }, () => {
+              this.activeFilter = filter;
+            });
           })
       }, (filter: string) => filter)
     }
@@ -281,6 +287,6 @@ export struct ActivityFeed {
     }
     .width('100%')
     .constraintSize({ maxWidth: PAGE_MAX_WIDTH })
-    .padding({ left: this.isWide ? 28 : 18, right: this.isWide ? 28 : 18 })
+    .padding({ left: 0, right: 0 })
   }
 }

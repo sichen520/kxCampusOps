@@ -32,7 +32,7 @@ export struct WorkflowHeader {
             .fontWeight(FontWeight.Medium)
             .fontColor(COLOR_PRIMARY)
           Text(`${workflowProgress(this.step)}% 已完成`)
-            .fontSize(11)
+            .fontSize(12)
             .fontColor(COLOR_MUTED)
         }
         .alignItems(HorizontalAlign.Start)

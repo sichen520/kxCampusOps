@@ -160,7 +160,8 @@ export struct ProjectBoardPage {
           PageTitle({
             eyebrow: 'CampusOps',
             title: this.isWide ? '项目执行控制台' : '项目执行看板',
-            description: '队长或已确认指导老师负责分工；成员在任务发布后执行本人任务，状态变化保留时间线。'
+            description: '队长或已确认指导老师负责分工；成员在任务发布后执行本人任务，状态变化保留时间线。',
+            compact: !this.isWide
           })
           if (this.hasProject && this.taskPlanConfirmed) {
             Row({ space: 8 }) {

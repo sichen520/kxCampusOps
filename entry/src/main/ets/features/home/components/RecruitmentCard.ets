@@ -26,6 +26,7 @@ export struct RecruitmentCard {
   @Prop isWide: boolean = false;
   @Prop actionLabel: string = '';
   @Prop actionDisabled: boolean = false;
+  @State isPressed: boolean = false;
   onOpen: () => void = () => {};
   onAction: () => void = () => {};
 
@@ -56,7 +57,7 @@ export struct RecruitmentCard {
   }
 
   build() {
-    Column({ space: 10 }) {
+    Column({ space: this.isWide ? 10 : 8 }) {
       Row() {
         StatusPill({
           text: this.post.kind,
@@ -68,27 +69,33 @@ export struct RecruitmentCard {
       }
       .width('100%')
       Text(this.post.title)
-        .fontSize(19)
+        .fontSize(this.isWide ? 19 : 17)
         .fontWeight(FontWeight.Bold)
         .fontColor(COLOR_TEXT)
         .maxLines(2)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
       Text(this.post.summary)
         .fontSize(13)
-        .lineHeight(20)
+        .lineHeight(this.isWide ? 20 : 19)
         .fontColor(COLOR_MUTED)
-        .maxLines(this.isWide ? 2 : 3)
+        .maxLines(2)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
       Row({ space: 8 }) {
         Text(this.post.publisher).fontSize(13).fontWeight(FontWeight.Medium).fontColor(COLOR_TEXT)
-        Text(this.post.publisherRole).fontSize(12).fontColor(COLOR_MUTED)
+        Text(`· ${this.post.organization}`).layoutWeight(1).fontSize(12).fontColor(COLOR_MUTED)
+          .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
       }
       .width('100%')
-      Text(this.post.organization).fontSize(11).fontColor(COLOR_BLUE)
-      Text(this.post.requiredRole).fontSize(12).fontColor(COLOR_TEXT)
-        .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
+      Row({ space: 6 }) {
+        Text('招募').fontSize(12).fontWeight(FontWeight.Medium).fontColor(COLOR_BLUE)
+          .backgroundColor(COLOR_BLUE_SOFT).borderRadius(3)
+          .padding({ left: 5, right: 5, top: 3, bottom: 3 })
+        Text(this.post.requiredRole).layoutWeight(1).fontSize(12).fontColor(COLOR_TEXT)
+          .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .width('100%')
       Row({ space: 8 }) {
-        Text(`截止 ${this.post.deadline}`).layoutWeight(1).fontSize(11).fontColor(COLOR_MUTED)
+        Text(`截止 ${this.post.deadline}`).layoutWeight(1).fontSize(12).fontColor(COLOR_MUTED)
         StatusPill({
           text: recruitmentDeadlineLabel(this.post.deadline, Date.now()),
           fillColor: this.deadlineFillColor(),
@@ -97,23 +104,23 @@ export struct RecruitmentCard {
       }
       .width('100%')
       Row({ space: 8 }) {
-        Button('查看详情')
+        Button(this.isWide ? '查看详情' : '详情')
           .layoutWeight(1)
-          .height(38)
+          .height(this.isWide ? 38 : 40)
           .fontSize(13)
           .fontColor(COLOR_PRIMARY)
           .backgroundColor(COLOR_PRIMARY_SOFT)
-          .borderRadius(4)
+          .borderRadius(6)
           .onClick(() => {
             this.onOpen();
           })
         Button(this.actionLabel.length > 0 ? this.actionLabel : this.defaultActionLabel())
           .layoutWeight(1)
-          .height(38)
+          .height(this.isWide ? 38 : 40)
           .fontSize(13)
           .fontColor(this.actionDisabled ? COLOR_MUTED : '#FFFFFF')
           .backgroundColor(this.actionDisabled ? '#E8EBE8' : COLOR_PRIMARY)
-          .borderRadius(4)
+          .borderRadius(6)
           .enabled(!this.actionDisabled)
           .onClick(() => {
             this.onAction();
@@ -122,12 +129,17 @@ export struct RecruitmentCard {
       .width('100%')
     }
     .width(this.isWide ? '49%' : '100%')
-    .constraintSize({ minHeight: 270 })
-    .margin({ bottom: 12 })
-    .padding(18)
+    .constraintSize({ minHeight: this.isWide ? 270 : 236 })
+    .margin({ bottom: this.isWide ? 12 : 10 })
+    .padding(this.isWide ? 18 : 14)
     .backgroundColor(COLOR_SURFACE)
     .borderRadius(8)
-    .border({ width: 1, color: COLOR_BORDER })
+    .border({ width: 1, color: this.isPressed ? COLOR_PRIMARY : COLOR_BORDER })
+    .scale({ x: this.isPressed ? 0.985 : 1, y: this.isPressed ? 0.985 : 1 })
+    .animation({ duration: 120, curve: Curve.EaseOut })
+    .onTouch((event: TouchEvent) => {
+      this.isPressed = event.type === TouchType.Down;
+    })
     .alignItems(HorizontalAlign.Start)
   }
 }

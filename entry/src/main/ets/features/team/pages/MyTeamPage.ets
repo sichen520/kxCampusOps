@@ -322,7 +322,8 @@ export struct MyTeamPage {
               eyebrow: '队伍',
               title: this.teamExists ? '我的队伍' : '队伍与指导关系',
               description: this.teamExists ? '队长由具体队伍的创建或移交关系决定，不是账号的固定身份。' :
-                '创建、加入和指导关系都需要明确的双向确认。'
+                '创建、加入和指导关系都需要明确的双向确认。',
+              compact: !this.isWide
             })
             if (this.teamExists) {
               this.TeamOverview()

@@ -443,7 +443,8 @@ export struct ProfilePage {
               description: this.accountRole === AccountRole.STUDENT ?
                 '管理身份资料、能力证据、申请、队伍、项目、活动记录和隐私设置。' :
                 this.accountRole === AccountRole.ADMIN ? '管理内容审核、举报处理、身份认证和平台设置。' :
-                '管理身份资料、活动发布、报名审批、指导项目和隐私设置。'
+                '管理身份资料、活动发布、报名审批、指导项目和隐私设置。',
+              compact: !this.isWide
             })
             this.IdentityCard()
             if (this.isEditing) {

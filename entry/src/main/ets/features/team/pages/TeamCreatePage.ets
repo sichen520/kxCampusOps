@@ -19,7 +19,8 @@ export struct TeamCreatePage {
           PageTitle({
             eyebrow: '队伍 · 创建招募',
             title: '创建一支比赛队伍',
-            description: '发布人只在这支新队伍中成为创建者和临时队长，其他学生账号不会因此获得队长权限。'
+            description: '发布人只在这支新队伍中成为创建者和临时队长，其他学生账号不会因此获得队长权限。',
+            compact: !this.isWide
           })
           RecruitmentComposer({
             accountRole: this.accountRole,

@@ -31,7 +31,7 @@ import { WorkflowPage } from '../features/workflow/pages/WorkflowPage';
 import { DesktopSidebar } from '../shared/components/DesktopSidebar';
 import { MobileHeader } from '../shared/components/MobileHeader';
 import { WorkspaceHeader } from '../shared/components/WorkspaceHeader';
-import { COLOR_BACKGROUND, COLOR_SURFACE } from '../shared/Theme';
+import { COLOR_BACKGROUND, COLOR_MUTED, COLOR_PRIMARY, COLOR_SURFACE } from '../shared/Theme';
 
 PersistentStorage.persistProp<RecruitmentPost[]>('kxCampusOps.recruitments', []);
 PersistentStorage.persistProp<KnowledgeResource[]>('kxCampusOps.resources', []);
@@ -251,6 +251,9 @@ struct Index {
     AppStorage.setOrCreate<boolean>('kxCampusOps.privacy.publicProfile', true);
     AppStorage.setOrCreate<boolean>('kxCampusOps.devices.phoneActive', true);
     AppStorage.setOrCreate<string>('kxCampusOps.feedback.lastReceipt', '');
+    AppStorage.setOrCreate<string>('kxCampusOps.admin.resourceAuditStatus', '待审核');
+    AppStorage.setOrCreate<string>('kxCampusOps.admin.reportStatus', '待处理');
+    AppStorage.setOrCreate<string>('kxCampusOps.admin.identityStatus', '待认证');
     this.resetWorkflow();
   }
 
@@ -596,6 +599,26 @@ struct Index {
   }
 
   @Builder
+  MobileTabBarItem(label: string, index: number) {
+    Column({ space: 5 }) {
+      Text(label)
+        .fontSize(12)
+        .fontWeight(this.selectedTab === index ? FontWeight.Bold : FontWeight.Medium)
+        .fontColor(this.selectedTab === index ? COLOR_PRIMARY : COLOR_MUTED)
+      Column()
+        .width(this.selectedTab === index ? 18 : 4)
+        .height(3)
+        .borderRadius(2)
+        .backgroundColor(this.selectedTab === index ? COLOR_PRIMARY : '#00000000')
+        .animation({ duration: 180, curve: Curve.EaseOut })
+    }
+    .width('100%')
+    .height(58)
+    .justifyContent(FlexAlign.Center)
+    .animation({ duration: 180, curve: Curve.EaseOut })
+  }
+
+  @Builder
   MobileWorkspace() {
     Column() {
       MobileHeader({
@@ -614,8 +637,8 @@ struct Index {
         }
       })
       Tabs({ barPosition: BarPosition.End, index: this.selectedTab }) {
-        TabContent() { this.HomeContent() }.tabBar('首页')
-        TabContent() { this.WorkflowContent() }.tabBar('可行')
+        TabContent() { this.HomeContent() }.tabBar(this.MobileTabBarItem('首页', 0))
+        TabContent() { this.WorkflowContent() }.tabBar(this.MobileTabBarItem('可行', 1))
         TabContent() {
           KnowledgePage({
             isWide: false,
@@ -632,16 +655,16 @@ struct Index {
               this.publishedDiscussions = [post].concat(this.publishedDiscussions);
             }
           })
-        }.tabBar('知享')
-        TabContent() { this.TeamContent() }.tabBar('队伍')
-        TabContent() { this.ProjectContent() }.tabBar('执行')
-        TabContent() { this.ProfileContent() }.tabBar('我的')
+        }.tabBar(this.MobileTabBarItem('知享', 2))
+        TabContent() { this.TeamContent() }.tabBar(this.MobileTabBarItem('队伍', 3))
+        TabContent() { this.ProjectContent() }.tabBar(this.MobileTabBarItem('执行', 4))
+        TabContent() { this.ProfileContent() }.tabBar(this.MobileTabBarItem('我的', 5))
         if (this.accountRole === AccountRole.ADMIN) {
-          TabContent() { this.AdminContent() }.tabBar('管理')
+          TabContent() { this.AdminContent() }.tabBar(this.MobileTabBarItem('管理', 6))
         }
       }
       .layoutWeight(1)
-      .barHeight(58)
+      .barHeight(62)
       .barBackgroundColor(COLOR_SURFACE)
       .scrollable(false)
       .onChange((index: number) => {
