@@ -15,6 +15,19 @@ import { KnowledgeComposer } from '../components/KnowledgeComposer';
 import { ResourceCard } from '../components/ResourceCard';
 import { ResourceDetail } from '../components/ResourceDetail';
 import {
+  ResourceInteraction,
+  applyToResource,
+  empty,
+  findOrCreate,
+  rate,
+  recordDownload,
+  recordView,
+  report,
+  toggleFavorite as toggleResourceFavorite,
+  upsert
+} from '../domain/KnowledgeInteractions';
+import { formatLocalMinute } from '../../../shared/DateTime';
+import {
   COLOR_BLUE,
   COLOR_BORDER,
   COLOR_MUTED,
@@ -25,6 +38,9 @@ import {
   COLOR_TEXT,
   PAGE_MAX_WIDTH
 } from '../../../shared/Theme';
+
+PersistentStorage.persistProp<ResourceInteraction[]>('kxCampusOps.knowledge.interactions.v1', []);
+PersistentStorage.persistProp<ResourceComment[]>('kxCampusOps.knowledge.comments.v1', []);
 
 @Component
 export struct KnowledgePage {
@@ -37,21 +53,20 @@ export struct KnowledgePage {
   @State selectedCategory: string = '全部主题';
   @State selectedType: string = '全部类型';
   @State selectedResourceId: string = '';
-  @State savedResourceIds: string[] = [];
-  @State ratedResourceId: string = '';
-  @State ratedScore: number = 0;
-  @State comments: ResourceComment[] = RESOURCE_COMMENTS;
+  @StorageLink('kxCampusOps.knowledge.interactions.v1') interactions: ResourceInteraction[] = [];
+  @StorageLink('kxCampusOps.knowledge.comments.v1') localComments: ResourceComment[] = [];
   @State showComposer: boolean = false;
   onRequireLogin: () => void = () => {};
   onResourcePublished: (resource: KnowledgeResource) => void = (_resource: KnowledgeResource) => {};
   onDiscussionPublished: (post: DiscussionPost) => void = (_post: DiscussionPost) => {};
 
   private allResources(): KnowledgeResource[] {
-    return KNOWLEDGE_RESOURCES.concat(this.extraResources);
+    return KNOWLEDGE_RESOURCES.concat(this.extraResources).map((resource: KnowledgeResource) =>
+      this.resourceWithInteraction(resource));
   }
 
   private resources(): KnowledgeResource[] {
-    const keyword: string = this.query.trim();
+    const keyword: string = this.query.trim().toLowerCase();
     return this.allResources().filter((resource: KnowledgeResource) => {
       const categoryMatched: boolean = this.selectedCategory === '全部主题' ||
         (this.selectedCategory === '其他' ? RESOURCE_CATEGORIES.indexOf(resource.category) < 0 || resource.category === '其他' :
@@ -59,10 +74,19 @@ export struct KnowledgePage {
       const typeMatched: boolean = this.selectedType === '全部类型' ||
         (this.selectedType === '其他' ? RESOURCE_TYPES.indexOf(resource.resourceType) < 0 || resource.resourceType === '其他' :
           resource.resourceType === this.selectedType);
-      const keywordMatched: boolean = keyword.length === 0 || resource.title.includes(keyword) ||
-        resource.summary.includes(keyword) || resource.tags.join(' ').includes(keyword) || resource.courseName.includes(keyword);
+      const searchableText: string =
+        `${resource.title} ${resource.summary} ${resource.tags.join(' ')} ${resource.courseName}`.toLowerCase();
+      const keywordMatched: boolean = keyword.length === 0 || searchableText.includes(keyword);
       return categoryMatched && typeMatched && keywordMatched;
     });
+  }
+
+  private interaction(resourceId: string): ResourceInteraction {
+    return findOrCreate(this.interactions, resourceId);
+  }
+
+  private resourceWithInteraction(resource: KnowledgeResource): KnowledgeResource {
+    return applyToResource(resource, empty(resource.id), this.interaction(resource.id));
   }
 
   private categoryCount(category: string): number {
@@ -86,19 +110,45 @@ export struct KnowledgePage {
   }
 
   private resourceComments(resourceId: string): ResourceComment[] {
-    return this.comments.filter((comment: ResourceComment) => comment.resourceId === resourceId);
+    return this.localComments.concat(RESOURCE_COMMENTS)
+      .filter((comment: ResourceComment) => comment.resourceId === resourceId);
   }
 
   private isSaved(resourceId: string): boolean {
-    return this.savedResourceIds.indexOf(resourceId) >= 0;
+    return this.interaction(resourceId).favorite;
+  }
+
+  private selectedRating(resourceId: string): number {
+    return this.interaction(resourceId).rating;
+  }
+
+  private isReported(resourceId: string): boolean {
+    return this.interaction(resourceId).reported;
+  }
+
+  private favoriteCount(): number {
+    return this.interactions.filter((interaction: ResourceInteraction) => interaction.favorite).length;
+  }
+
+  private recordResourceView(resourceId: string): void {
+    this.interactions = upsert(this.interactions, recordView(this.interaction(resourceId)));
+  }
+
+  private recordResourceDownload(resourceId: string): void {
+    this.interactions = upsert(this.interactions, recordDownload(this.interaction(resourceId)));
   }
 
   private toggleFavorite(resourceId: string): void {
-    if (this.isSaved(resourceId)) {
-      this.savedResourceIds = this.savedResourceIds.filter((id: string) => id !== resourceId);
-    } else {
-      this.savedResourceIds = this.savedResourceIds.concat([resourceId]);
-    }
+    this.interactions = upsert(this.interactions,
+      toggleResourceFavorite(this.interaction(resourceId)));
+  }
+
+  private rateResource(resourceId: string, score: number): void {
+    this.interactions = upsert(this.interactions, rate(this.interaction(resourceId), score));
+  }
+
+  private reportResource(resourceId: string): void {
+    this.interactions = upsert(this.interactions, report(this.interaction(resourceId)));
   }
 
   private openComposer(): void {
@@ -320,7 +370,10 @@ export struct KnowledgePage {
           ResourceCard({
             resource: resource,
             isWide: this.isWide,
-            onOpen: () => { this.selectedResourceId = resource.id; }
+            onOpen: () => {
+              this.recordResourceView(resource.id);
+              this.selectedResourceId = resource.id;
+            }
           })
         }, (resource: KnowledgeResource) => resource.id)
       }
@@ -360,7 +413,7 @@ export struct KnowledgePage {
       Row() {
         Text('已收藏').fontSize(12).fontColor(COLOR_MUTED)
         Blank()
-        Text(this.savedResourceIds.length.toString()).fontSize(16).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+        Text(this.favoriteCount().toString()).fontSize(16).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
       }
       .width('100%').padding({ top: 14, bottom: 14 })
       Row() {
@@ -437,27 +490,27 @@ export struct KnowledgePage {
           isLoggedIn: this.isLoggedIn,
           isWide: this.isWide,
           isSaved: this.isSaved(resource.id),
-          selectedRating: this.ratedResourceId === resource.id ? this.ratedScore : 0,
+          isReported: this.isReported(resource.id),
+          selectedRating: this.selectedRating(resource.id),
           comments: this.resourceComments(resource.id),
           onBack: () => { this.selectedResourceId = ''; },
           onRequireLogin: () => { this.onRequireLogin(); },
           onFavorite: () => { this.toggleFavorite(resource.id); },
-          onDownload: () => {},
+          onDownload: () => { this.recordResourceDownload(resource.id); },
           onRate: (score: number) => {
-            this.ratedResourceId = resource.id;
-            this.ratedScore = score;
+            this.rateResource(resource.id, score);
           },
           onComment: (content: string) => {
             const comment: ResourceComment = {
-              id: `comment-local-${this.comments.length}`,
+              id: `comment-local-${Date.now()}`,
               resourceId: resource.id,
               author: '当前账号',
               content: content,
-              createdAt: '刚刚'
+              createdAt: formatLocalMinute(new Date())
             };
-            this.comments = this.comments.concat([comment]);
+            this.localComments = [comment].concat(this.localComments);
           },
-          onReport: () => {}
+          onReport: () => { this.reportResource(resource.id); }
         })
       }
     }, (resource: KnowledgeResource) => resource.id)

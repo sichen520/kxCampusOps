@@ -1,10 +1,20 @@
 import { RecruitmentKind, RecruitmentPost } from '../../../domain/WorkflowModels';
+import { StatusPill } from '../../../shared/components/StatusPill';
+import {
+  recruitmentDeadlineLabel,
+  recruitmentDeadlineState,
+  RecruitmentDeadlineState
+} from '../domain/RecruitmentDiscovery';
 import {
   COLOR_AMBER,
+  COLOR_AMBER_SOFT,
   COLOR_BLUE,
   COLOR_BORDER,
   COLOR_MUTED,
   COLOR_PRIMARY,
+  COLOR_PRIMARY_SOFT,
+  COLOR_RED,
+  COLOR_RED_SOFT,
   COLOR_SURFACE,
   COLOR_TEXT
 } from '../../../shared/Theme';
@@ -24,6 +34,28 @@ export struct RecruitmentCard {
 
   private accentColor(): string {
     return this.post.kind === RecruitmentKind.COMPETITION ? COLOR_PRIMARY : COLOR_BLUE;
+  }
+
+  private deadlineFillColor(): string {
+    const state: RecruitmentDeadlineState = recruitmentDeadlineState(this.post.deadline, Date.now());
+    if (state === RecruitmentDeadlineState.EXPIRED || state === RecruitmentDeadlineState.URGENT) {
+      return COLOR_RED_SOFT;
+    }
+    if (state === RecruitmentDeadlineState.SOON) {
+      return COLOR_AMBER_SOFT;
+    }
+    return COLOR_PRIMARY_SOFT;
+  }
+
+  private deadlineTextColor(): string {
+    const state: RecruitmentDeadlineState = recruitmentDeadlineState(this.post.deadline, Date.now());
+    if (state === RecruitmentDeadlineState.EXPIRED || state === RecruitmentDeadlineState.URGENT) {
+      return COLOR_RED;
+    }
+    if (state === RecruitmentDeadlineState.SOON) {
+      return COLOR_AMBER;
+    }
+    return COLOR_PRIMARY;
   }
 
   @Builder
@@ -98,10 +130,17 @@ export struct RecruitmentCard {
           .fontColor(COLOR_TEXT)
           .maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
-        Text(`截止 ${this.post.deadline}`)
-          .fontSize(12)
-          .fontColor(COLOR_AMBER)
-          .maxLines(1)
+        Row({ space: 6 }) {
+          Text(`截止 ${this.post.deadline}`)
+            .fontSize(12)
+            .fontColor(COLOR_AMBER)
+            .maxLines(1)
+          StatusPill({
+            text: recruitmentDeadlineLabel(this.post.deadline, Date.now()),
+            fillColor: this.deadlineFillColor(),
+            textColor: this.deadlineTextColor()
+          })
+        }
       }
       .width(190)
       .padding({ right: 18 })
@@ -147,6 +186,11 @@ export struct RecruitmentCard {
           .fontColor(this.accentColor())
           .letterSpacing(0.6)
         Blank()
+        StatusPill({
+          text: recruitmentDeadlineLabel(this.post.deadline, Date.now()),
+          fillColor: this.deadlineFillColor(),
+          textColor: this.deadlineTextColor()
+        })
         Text(this.post.progress).fontSize(11).fontColor(COLOR_MUTED)
       }
       .width('100%')

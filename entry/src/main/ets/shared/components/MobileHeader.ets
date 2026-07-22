@@ -3,8 +3,8 @@ import {
   COLOR_BORDER,
   COLOR_MUTED,
   COLOR_PRIMARY,
+  COLOR_PRIMARY_SOFT,
   COLOR_SURFACE,
-  COLOR_SURFACE_ALT,
   COLOR_TEXT
 } from '../Theme';
 
@@ -14,75 +14,96 @@ export struct MobileHeader {
   @Prop isLoggedIn: boolean = false;
   @Prop demoAccount: DemoAccount = DemoAccount.STUDENT_APPLICANT;
   @Prop accountDisplayName: string = '';
+  @State resetPressed: boolean = false;
+  @State accountPressed: boolean = false;
   onReset: () => void = () => {};
   onLogin: () => void = () => {};
   onSwitchAccount: () => void = () => {};
 
-  private currentSection(): string {
-    const names: string[] = ['机会', '可行性', '知享', '队伍', '执行', '我的', '管理'];
-    return names[this.selectedTab];
+  private accountLabel(): string {
+    return this.accountDisplayName.length > 0 ? this.accountDisplayName : '账号';
+  }
+
+  private sectionLabel(): string {
+    if (this.selectedTab === 1) {
+      return '机会判断';
+    }
+    if (this.selectedTab === 2) {
+      return '知识共享';
+    }
+    if (this.selectedTab === 3) {
+      return '我的队伍';
+    }
+    if (this.selectedTab === 4) {
+      return '项目执行';
+    }
+    if (this.selectedTab === 5) {
+      return '个人中心';
+    }
+    if (this.selectedTab === 6) {
+      return '平台管理';
+    }
+    return '校园机会';
   }
 
   build() {
-    Row({ space: 8 }) {
-      Text('行')
-        .width(30)
-        .height(30)
-        .textAlign(TextAlign.Center)
-        .padding({ top: 4 })
-        .fontSize(17)
-        .fontWeight(FontWeight.Bold)
-        .fontColor('#FFFFFF')
-        .backgroundColor(COLOR_PRIMARY)
-        .borderRadius(4)
-      Column({ space: 1 }) {
-        Text('可行')
-          .fontSize(15)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(COLOR_TEXT)
-          .letterSpacing(0.3)
-        Text(this.currentSection())
-          .fontSize(10)
-          .fontColor(COLOR_MUTED)
-          .letterSpacing(0.5)
+    Row() {
+      Row({ space: 9 }) {
+        Column()
+          .width(7).height(7).borderRadius(4).backgroundColor(COLOR_PRIMARY)
+        Column({ space: 1 }) {
+          Text('CampusOps')
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(COLOR_TEXT)
+          Text(this.sectionLabel())
+            .fontSize(12)
+            .fontColor(COLOR_MUTED)
+        }
+        .alignItems(HorizontalAlign.Start)
       }
-      .alignItems(HorizontalAlign.Start)
 
       Blank()
 
       if (this.selectedTab === 1) {
         Button('重置')
-          .width(52)
-          .height(32)
           .fontSize(12)
           .fontColor(COLOR_PRIMARY)
-          .backgroundColor(COLOR_SURFACE)
-          .border({ width: 1, color: COLOR_BORDER })
-          .borderRadius(4)
+          .backgroundColor(COLOR_PRIMARY_SOFT)
+          .borderRadius(6)
+          .height(34)
+          .scale({ x: this.resetPressed ? 0.95 : 1, y: this.resetPressed ? 0.95 : 1 })
+          .animation({ duration: 120, curve: Curve.EaseOut })
+          .onTouch((event: TouchEvent) => {
+            this.resetPressed = event.type === TouchType.Down;
+          })
           .onClick(() => {
             this.onReset();
           })
       }
-      Button(this.isLoggedIn ? '切换' : '登录')
-        .width(52)
-        .height(32)
-        .fontSize(12)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(this.isLoggedIn ? COLOR_TEXT : '#FFFFFF')
-        .backgroundColor(this.isLoggedIn ? COLOR_SURFACE_ALT : COLOR_PRIMARY)
-        .border({ width: 1, color: this.isLoggedIn ? COLOR_BORDER : COLOR_PRIMARY })
-        .borderRadius(4)
-        .onClick(() => {
-          if (this.isLoggedIn) {
-            this.onSwitchAccount();
-          } else {
-            this.onLogin();
-          }
-        })
+      Button(this.isLoggedIn ? this.accountLabel() : '登录')
+          .fontSize(12)
+          .fontColor(this.isLoggedIn ? COLOR_PRIMARY : '#FFFFFF')
+          .backgroundColor(this.isLoggedIn ? COLOR_PRIMARY_SOFT : COLOR_PRIMARY)
+          .borderRadius(6)
+          .height(34)
+          .margin({ left: 7 })
+          .scale({ x: this.accountPressed ? 0.95 : 1, y: this.accountPressed ? 0.95 : 1 })
+          .animation({ duration: 120, curve: Curve.EaseOut })
+          .onTouch((event: TouchEvent) => {
+            this.accountPressed = event.type === TouchType.Down;
+          })
+          .onClick(() => {
+            if (this.isLoggedIn) {
+              this.onSwitchAccount();
+            } else {
+              this.onLogin();
+            }
+          })
     }
     .width('100%')
     .height(60)
-    .padding({ left: 14, right: 14 })
+    .padding({ left: 16, right: 16 })
     .backgroundColor(COLOR_SURFACE)
     .border({ width: { bottom: 1 }, color: COLOR_BORDER })
   }

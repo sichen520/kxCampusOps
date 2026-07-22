@@ -5,9 +5,10 @@ export struct PageTitle {
   @Prop eyebrow: string = '';
   @Prop title: string = '';
   @Prop description: string = '';
+  @Prop compact: boolean = false;
 
   build() {
-    Column({ space: 6 }) {
+    Column({ space: this.compact ? 5 : 6 }) {
       if (this.eyebrow.length > 0) {
         Row({ space: 8 }) {
           Column()
@@ -24,8 +25,8 @@ export struct PageTitle {
       }
       if (this.title.length > 0) {
         Text(this.title)
-          .fontSize(22)
-          .lineHeight(30)
+          .fontSize(this.compact ? 20 : 22)
+          .lineHeight(this.compact ? 27 : 30)
           .fontWeight(FontWeight.Bold)
           .fontColor(COLOR_TEXT)
           .letterSpacing(0.2)

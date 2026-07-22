@@ -1,5 +1,10 @@
+import { common } from '@kit.AbilityKit';
 import { KnowledgeResource, ResourceComment } from '../../../domain/WorkflowModels';
 import { StatusPill } from '../../../shared/components/StatusPill';
+import {
+  AttachmentExportResult,
+  exportBundledAttachment
+} from '../services/BundledAttachmentExporter';
 import {
   COLOR_AMBER,
   COLOR_AMBER_SOFT,
@@ -21,6 +26,7 @@ export struct ResourceDetail {
   @Prop isLoggedIn: boolean = false;
   @Prop isWide: boolean = false;
   @Prop isSaved: boolean = false;
+  @Prop isReported: boolean = false;
   @Prop selectedRating: number = 0;
   @Prop comments: ResourceComment[] = [];
   @State commentText: string = '';
@@ -40,6 +46,37 @@ export struct ResourceDetail {
     }
     action();
     this.notice = notice;
+  }
+
+  private attachmentRawFile(): string {
+    return this.resource.attachmentRawFile === undefined ? '' : this.resource.attachmentRawFile;
+  }
+
+  private hasAttachment(): boolean {
+    return this.attachmentRawFile().trim().length > 0;
+  }
+
+  private async saveAttachment(): Promise<void> {
+    if (!this.isLoggedIn) {
+      this.onRequireLogin();
+      return;
+    }
+    const context = this.getUIContext().getHostContext();
+    if (context === undefined || !this.hasAttachment()) {
+      this.notice = '附件不可用，请稍后重试。';
+      return;
+    }
+    this.notice = '请选择 PDF 保存位置。';
+    const result: AttachmentExportResult = await exportBundledAttachment(
+      context as common.UIAbilityContext, this.attachmentRawFile(), this.resource.fileName);
+    if (result === AttachmentExportResult.SAVED) {
+      this.onDownload();
+      this.notice = `附件已保存：${this.resource.fileName}`;
+    } else if (result === AttachmentExportResult.CANCELLED) {
+      this.notice = '已取消保存附件。';
+    } else {
+      this.notice = '附件保存失败，请检查存储空间后重试。';
+    }
   }
 
   @Builder
@@ -65,7 +102,14 @@ export struct ResourceDetail {
       Divider().color(COLOR_BORDER)
       this.MetaRow('可见范围', this.resource.permission)
       Divider().color(COLOR_BORDER)
-      this.MetaRow('文件', this.resource.fileName)
+      this.MetaRow('附件名称', this.resource.fileName)
+      if (this.hasAttachment()) {
+        Text('实体 PDF 已随应用内置，可保存到本机。')
+          .fontSize(12).fontColor(COLOR_PRIMARY).padding({ top: 4, bottom: 4 })
+      } else {
+        Text('当前演示包未附带实体附件，暂不提供下载。')
+          .fontSize(12).fontColor(COLOR_AMBER).padding({ top: 4, bottom: 4 })
+      }
       Text('资源简介').fontSize(16).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT).margin({ top: 10 })
       Text(this.resource.summary).fontSize(14).lineHeight(22).fontColor(COLOR_MUTED)
       Row({ space: 6 }) {
@@ -98,8 +142,12 @@ export struct ResourceDetail {
           Text('下载').fontSize(11).fontColor(COLOR_MUTED)
         }.layoutWeight(1)
         Column({ space: 3 }) {
+          Text(this.resource.favoriteCount.toString()).fontSize(19).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+          Text('收藏').fontSize(11).fontColor(COLOR_MUTED)
+        }.layoutWeight(1)
+        Column({ space: 3 }) {
           Text(this.resource.averageRating.toString()).fontSize(19).fontWeight(FontWeight.Bold).fontColor(COLOR_AMBER)
-          Text('评分').fontSize(11).fontColor(COLOR_MUTED)
+          Text(`${this.resource.ratingCount} 人评分`).fontSize(11).fontColor(COLOR_MUTED)
         }.layoutWeight(1)
       }
       .width('100%')
@@ -121,13 +169,18 @@ export struct ResourceDetail {
         .onClick(() => {
           this.interact(() => { this.onFavorite(); }, this.isSaved ? '已取消收藏' : '已加入收藏');
         })
-      Button('下载演示文件')
-        .width('100%').height(42).fontSize(13).fontColor('#FFFFFF').backgroundColor(COLOR_PRIMARY).borderRadius(4)
-        .onClick(() => {
-          this.interact(() => { this.onDownload(); }, `已生成下载任务：${this.resource.fileName}`);
-        })
-      Button('举报资源')
+      if (this.hasAttachment()) {
+        Button('保存 PDF 附件')
+          .width('100%').height(42).fontSize(13).fontColor('#FFFFFF').backgroundColor(COLOR_PRIMARY).borderRadius(4)
+          .onClick(() => { this.saveAttachment(); })
+      } else {
+        Button('演示包未附带附件')
+          .width('100%').height(42).fontSize(13).fontColor(COLOR_MUTED).backgroundColor('#E9EDE9').borderRadius(4)
+          .enabled(false)
+      }
+      Button(this.isReported ? '已举报，等待处理' : '举报资源')
         .width('100%').height(38).fontSize(12).fontColor(COLOR_RED).backgroundColor(COLOR_RED_SOFT).borderRadius(4)
+        .enabled(!this.isReported)
         .onClick(() => {
           this.interact(() => { this.onReport(); }, '举报已提交，管理员会保存证据后处理');
         })

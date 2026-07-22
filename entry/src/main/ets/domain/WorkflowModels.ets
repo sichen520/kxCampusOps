@@ -99,6 +99,7 @@ export interface KnowledgeResource {
   ratingCount: number;
   createdAt: string;
   fileName: string;
+  attachmentRawFile?: string;
 }
 
 export interface ResourceComment {
