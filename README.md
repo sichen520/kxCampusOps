@@ -88,7 +88,7 @@ XiaoHuiTong/
 1. 克隆仓库：
 
    ```bash
-   git clone https://github.com/sichen520/kxCampusOps.git XiaoHuiTong
+   git clone https://github.com/sichen520/XiaoHuiTong.git XiaoHuiTong
    cd XiaoHuiTong
    ```
 
