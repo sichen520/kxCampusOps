@@ -124,7 +124,7 @@ export struct TeamPage {
         StatusPill({ text: '团队已成立', fillColor: COLOR_PRIMARY_SOFT, textColor: COLOR_PRIMARY })
         Text('项目不会自动创建，仍可继续招募。').fontSize(12).lineHeight(18).fontColor(COLOR_MUTED)
         Blank()
-        Button('创建 CampusOps 项目')
+        Button('创建校汇通项目')
           .width('100%')
           .height(42)
           .fontSize(13)

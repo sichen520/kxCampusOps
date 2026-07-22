@@ -83,7 +83,7 @@ export struct ProjectBoardPage {
   ProjectSummary() {
     Row() {
       Column({ space: 3 }) {
-        Text(this.opportunityTitle.length > 0 ? this.opportunityTitle : 'CampusOps 项目')
+        Text(this.opportunityTitle.length > 0 ? this.opportunityTitle : '校汇通项目')
           .fontSize(18).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
         Text(`${this.tasks.length} 个任务 · 分工已由负责人确认`).fontSize(12).fontColor(COLOR_MUTED)
       }
@@ -180,7 +180,7 @@ export struct ProjectBoardPage {
       Row() {
         Column({ space: 16 }) {
           PageTitle({
-            eyebrow: 'CampusOps',
+            eyebrow: '校汇通',
             title: this.isWide ? '项目执行控制台' : '项目执行看板',
             description: '任务、负责人、截止时间和验收条件保持在同一视图。'
           })

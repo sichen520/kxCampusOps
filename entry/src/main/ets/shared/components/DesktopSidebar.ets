@@ -51,7 +51,7 @@ export struct DesktopSidebar {
   build() {
     Column() {
       Row({ space: 11 }) {
-        Text('行')
+        Text('汇')
           .width(38)
           .height(38)
           .textAlign(TextAlign.Center)
@@ -62,7 +62,7 @@ export struct DesktopSidebar {
           .backgroundColor(COLOR_PRIMARY)
           .borderRadius(4)
         Column({ space: 2 }) {
-          Text('可行 CampusOps')
+          Text('校汇通')
             .fontSize(18)
             .fontWeight(FontWeight.Bold)
             .fontColor(COLOR_TEXT)

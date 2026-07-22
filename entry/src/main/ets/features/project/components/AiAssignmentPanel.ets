@@ -37,7 +37,7 @@ export struct AiAssignmentPanel {
   }
 
   private loadDemoContext(): void {
-    this.projectGoal = '完成可安装的可行 CampusOps HarmonyOS Demo，跑通机会履约黄金链路。';
+    this.projectGoal = '完成可安装的校汇通 HarmonyOS Demo，跑通机会履约黄金链路。';
     this.deliverable = '7 月 24 日前完成 HAP、核心链路测试记录、5 分钟演示脚本和答辩材料。';
     this.memberDetails = `${this.leaderName.length > 0 ? this.leaderName : '队长'}负责产品统筹与最终提交；` +
       `${this.memberName.length > 0 ? this.memberName : '队员'}负责交互走查和演示表达。`;

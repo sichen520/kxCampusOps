@@ -243,7 +243,7 @@ export struct MyTeamPage {
       }
       .width('100%')
       if (this.teamConfirmed) {
-        Button('进入 CampusOps 项目')
+        Button('进入校汇通项目')
           .width('100%').height(44).fontSize(14).fontColor('#FFFFFF')
           .backgroundColor(COLOR_PRIMARY).borderRadius(5)
           .onClick(() => { this.onOpenProject(); })

@@ -14,7 +14,7 @@ import {
   PAGE_MAX_WIDTH
 } from '../../../shared/Theme';
 
-PersistentStorage.persistProp<DiscussionReply[]>('kxCampusOps.knowledge.replies.v1', []);
+PersistentStorage.persistProp<DiscussionReply[]>('xiaoHuiTong.knowledge.replies.v1', []);
 
 @Component
 export struct DiscussionFeed {
@@ -25,7 +25,7 @@ export struct DiscussionFeed {
   @State selectedBoard: string = '全部';
   @State selectedPostId: string = '';
   @State replyText: string = '';
-  @StorageLink('kxCampusOps.knowledge.replies.v1') localReplies: DiscussionReply[] = [];
+  @StorageLink('xiaoHuiTong.knowledge.replies.v1') localReplies: DiscussionReply[] = [];
   @State notice: string = '';
   onRequireLogin: () => void = () => {};
 

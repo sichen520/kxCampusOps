@@ -1,7 +1,7 @@
 {
   "app": {
-    "bundleName": "com.kexing.campusops",
-    "vendor": "可行 CampusOps 团队",
+    "bundleName": "com.xiaohuitong.app",
+    "vendor": "校汇通团队",
     "versionCode": 1000000,
     "versionName": "1.0.0",
     "buildVersion": "1",

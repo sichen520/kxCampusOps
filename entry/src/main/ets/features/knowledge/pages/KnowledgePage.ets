@@ -39,8 +39,8 @@ import {
   PAGE_MAX_WIDTH
 } from '../../../shared/Theme';
 
-PersistentStorage.persistProp<ResourceInteraction[]>('kxCampusOps.knowledge.interactions.v1', []);
-PersistentStorage.persistProp<ResourceComment[]>('kxCampusOps.knowledge.comments.v1', []);
+PersistentStorage.persistProp<ResourceInteraction[]>('xiaoHuiTong.knowledge.interactions.v1', []);
+PersistentStorage.persistProp<ResourceComment[]>('xiaoHuiTong.knowledge.comments.v1', []);
 
 @Component
 export struct KnowledgePage {
@@ -53,8 +53,8 @@ export struct KnowledgePage {
   @State selectedCategory: string = '全部主题';
   @State selectedType: string = '全部类型';
   @State selectedResourceId: string = '';
-  @StorageLink('kxCampusOps.knowledge.interactions.v1') interactions: ResourceInteraction[] = [];
-  @StorageLink('kxCampusOps.knowledge.comments.v1') localComments: ResourceComment[] = [];
+  @StorageLink('xiaoHuiTong.knowledge.interactions.v1') interactions: ResourceInteraction[] = [];
+  @StorageLink('xiaoHuiTong.knowledge.comments.v1') localComments: ResourceComment[] = [];
   @State showComposer: boolean = false;
   onRequireLogin: () => void = () => {};
   onResourcePublished: (resource: KnowledgeResource) => void = (_resource: KnowledgeResource) => {};

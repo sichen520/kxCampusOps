@@ -1,8 +1,8 @@
-# CampusOps full UI prototype set
+# XiaoHuiTong full UI prototype set
 
 ## Product direction
 
-CampusOps is an evidence-driven campus action workspace. It helps students move from a public opportunity to feasibility judgement, team formation, task planning, and execution while preserving the source evidence behind each decision.
+XiaoHuiTong is an evidence-driven campus action workspace. It helps students move from a public opportunity to feasibility judgement, team formation, task planning, and execution while preserving the source evidence behind each decision.
 
 ## Shared visual system
 
@@ -18,7 +18,7 @@ CampusOps is an evidence-driven campus action workspace. It helps students move 
 
 ## Persistent desktop shell
 
-- 248 px white left navigation with a green square `行` mark and `可行 CampusOps`
+- 248 px white left navigation with a green square `汇` mark and `校汇通`
 - Navigation: `首页`, `可行`, `知享`, `队伍`, `执行`, `我的`, and role-gated `管理`
 - Compact white top workspace header with the current page title, calendar action, and signed-in avatar
 - Workflow pages add a five-step progress line: `机会识别`, `可行性分析`, `方案规划`, `执行准备`, `报名提交`

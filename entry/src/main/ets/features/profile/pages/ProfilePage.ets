@@ -292,7 +292,7 @@ export struct ProfilePage {
           this.onOpenTeam();
         })
         Divider().color(COLOR_BORDER)
-        this.MenuItem('我的项目', 'CampusOps 项目与个人任务', this.projectExists ? '进入项目' : '暂无项目', () => {
+        this.MenuItem('我的项目', '校汇通项目与个人任务', this.projectExists ? '进入项目' : '暂无项目', () => {
           this.onOpenProject();
         })
         Divider().color(COLOR_BORDER)

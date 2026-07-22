@@ -7,17 +7,17 @@ import {
   COLOR_TEXT
 } from '../../../shared/Theme';
 
-PersistentStorage.persistProp<boolean>('kxCampusOps.notifications.deadline', true);
-PersistentStorage.persistProp<boolean>('kxCampusOps.notifications.application', true);
-PersistentStorage.persistProp<boolean>('kxCampusOps.notifications.task', true);
-PersistentStorage.persistProp<boolean>('kxCampusOps.notifications.activity', true);
+PersistentStorage.persistProp<boolean>('xiaoHuiTong.notifications.deadline', true);
+PersistentStorage.persistProp<boolean>('xiaoHuiTong.notifications.application', true);
+PersistentStorage.persistProp<boolean>('xiaoHuiTong.notifications.task', true);
+PersistentStorage.persistProp<boolean>('xiaoHuiTong.notifications.activity', true);
 
 @Component
 export struct NotificationSettingsPanel {
-  @StorageLink('kxCampusOps.notifications.deadline') deadlineEnabled: boolean = true;
-  @StorageLink('kxCampusOps.notifications.application') applicationEnabled: boolean = true;
-  @StorageLink('kxCampusOps.notifications.task') taskEnabled: boolean = true;
-  @StorageLink('kxCampusOps.notifications.activity') activityEnabled: boolean = true;
+  @StorageLink('xiaoHuiTong.notifications.deadline') deadlineEnabled: boolean = true;
+  @StorageLink('xiaoHuiTong.notifications.application') applicationEnabled: boolean = true;
+  @StorageLink('xiaoHuiTong.notifications.task') taskEnabled: boolean = true;
+  @StorageLink('xiaoHuiTong.notifications.activity') activityEnabled: boolean = true;
   @State saved: boolean = false;
   onBack: () => void = () => {};
 

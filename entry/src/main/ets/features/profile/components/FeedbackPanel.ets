@@ -15,11 +15,11 @@ import {
   feedbackValidationMessage
 } from '../domain/FeedbackQueue';
 
-PersistentStorage.persistProp<FeedbackRecord[]>('kxCampusOps.feedback.records.v1', []);
+PersistentStorage.persistProp<FeedbackRecord[]>('xiaoHuiTong.feedback.records.v1', []);
 
 @Component
 export struct FeedbackPanel {
-  @StorageLink('kxCampusOps.feedback.records.v1') records: FeedbackRecord[] = [];
+  @StorageLink('xiaoHuiTong.feedback.records.v1') records: FeedbackRecord[] = [];
   @State category: string = '功能问题';
   @State content: string = '';
   @State contact: string = '';
@@ -32,7 +32,7 @@ export struct FeedbackPanel {
       this.message = validationMessage;
       return;
     }
-    const receipt: string = `KX-${Date.now()}`;
+    const receipt: string = `XHT-${Date.now()}`;
     const record: FeedbackRecord = createFeedbackRecord(
       receipt, this.category, this.content, this.contact, formatLocalMinute(new Date()));
     this.records = enqueueFeedback(this.records, record);

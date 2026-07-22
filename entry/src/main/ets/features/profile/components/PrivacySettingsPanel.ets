@@ -9,17 +9,17 @@ import {
   COLOR_TEXT
 } from '../../../shared/Theme';
 
-PersistentStorage.persistProp<boolean>('kxCampusOps.privacy.evidence', true);
-PersistentStorage.persistProp<boolean>('kxCampusOps.privacy.contact', false);
-PersistentStorage.persistProp<boolean>('kxCampusOps.privacy.aiData', false);
-PersistentStorage.persistProp<boolean>('kxCampusOps.privacy.publicProfile', true);
+PersistentStorage.persistProp<boolean>('xiaoHuiTong.privacy.evidence', true);
+PersistentStorage.persistProp<boolean>('xiaoHuiTong.privacy.contact', false);
+PersistentStorage.persistProp<boolean>('xiaoHuiTong.privacy.aiData', false);
+PersistentStorage.persistProp<boolean>('xiaoHuiTong.privacy.publicProfile', true);
 
 @Component
 export struct PrivacySettingsPanel {
-  @StorageLink('kxCampusOps.privacy.evidence') evidenceEnabled: boolean = true;
-  @StorageLink('kxCampusOps.privacy.contact') contactEnabled: boolean = false;
-  @StorageLink('kxCampusOps.privacy.aiData') aiDataEnabled: boolean = false;
-  @StorageLink('kxCampusOps.privacy.publicProfile') publicProfileEnabled: boolean = true;
+  @StorageLink('xiaoHuiTong.privacy.evidence') evidenceEnabled: boolean = true;
+  @StorageLink('xiaoHuiTong.privacy.contact') contactEnabled: boolean = false;
+  @StorageLink('xiaoHuiTong.privacy.aiData') aiDataEnabled: boolean = false;
+  @StorageLink('xiaoHuiTong.privacy.publicProfile') publicProfileEnabled: boolean = true;
   @State saved: boolean = false;
   onBack: () => void = () => {};
 

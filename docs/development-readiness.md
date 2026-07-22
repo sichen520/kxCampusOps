@@ -1,9 +1,9 @@
-# 可行 CampusOps 开发就绪与竞赛交付清单
+# 校汇通开发就绪与竞赛交付清单
 
 ## 1. 当前结论
 
 - 产品、需求、创意和技术栈文档已形成 V1.6 开发基线。
-- 原生 HarmonyOS 工程位于 `E:\UN\kxCampusOps`，已完成可点击的 M0 黄金链路首版。
+- 原生 HarmonyOS 工程位于 `E:\UN\XiaoHuiTong`，已完成可点击的 M0 黄金链路首版。
 - DevEco Studio 6.1.1.280、HarmonyOS SDK 6.1.1/API 24 和内置 JBR 21 已安装。
 - ArkTS 编译和 HAP 打包已验证通过，产物为 `entry-default-unsigned.hap`。
 - V1.6 文档已归入工程并初始化 Git；首次安装验收前仍须完成自动签名配置。
@@ -59,7 +59,7 @@
 | DevEco Studio | 可用 | `E:\UN\hongmeng IDE\DevEco Studio`，6.1.1.280 |
 | HarmonyOS SDK | 可用 | `E:\UN\hongmeng IDE\DevEco Studio\sdk`，6.1.1/API 24 |
 | DevEco JBR | 可用 | JBR 21 |
-| HarmonyOS 工程 | 可用 | `E:\UN\kxCampusOps` |
+| HarmonyOS 工程 | 可用 | `E:\UN\XiaoHuiTong` |
 | HAP 构建 | 已通过 | `entry\build\default\outputs\default\entry-default-unsigned.hap` |
 | 本地单元测试 | 已通过 | 11/11 领域规则测试通过；整体行覆盖率 56.47%，函数覆盖率 58.33%，分支覆盖率 61.54% |
 | HAP 签名 | 未完成 | 需要在 DevEco Studio 中配置自动签名/证书 |
@@ -94,7 +94,7 @@ $env:PATH="E:\UN\hongmeng IDE\DevEco Studio\jbr\bin;$env:PATH"
 ```text
 首页 -> 扫描/导入机会（可用模拟图片） -> AI 解析结果核对
 -> 个人可行性报告 -> 生成草稿团队 -> 队长批准一名申请者
--> 确认团队 -> 创建 CampusOps 项目 -> 查看任务看板
+-> 确认团队 -> 创建校汇通项目 -> 查看任务看板
 ```
 
 第一版必须满足：
@@ -109,7 +109,7 @@ $env:PATH="E:\UN\hongmeng IDE\DevEco Studio\jbr\bin;$env:PATH"
 
 ## 8. 开发启动顺序
 
-1. 将 `E:\UN\kxCampusOps` 作为代码主目录，并把本目录 `docs` 归入同一目录，避免双目录文档漂移。
+1. 将 `E:\UN\XiaoHuiTong` 作为代码主目录，并把本目录 `docs` 归入同一目录，避免双目录文档漂移。
 2. 初始化 Git、确认 `.gitignore` 排除签名材料和构建产物，再提交模板工程与 V1.6 文档基线；当前 `.gitignore` 已排除构建目录和常见证书、私钥扩展名。
 3. 配置 DevEco 自动签名，安装一次空模板 HAP；证书、私钥和本机签名配置不得提交仓库。
 4. 冻结正式 `bundleName` 与 vendor，替换应用名、模块描述和 `Hello World` 占位，再建立 `core`、`feature`、`shared`、`data` 分层和统一路由。

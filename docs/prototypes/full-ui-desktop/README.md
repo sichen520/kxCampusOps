@@ -1,4 +1,4 @@
-# CampusOps selected desktop prototypes
+# XiaoHuiTong selected desktop prototypes
 
 These 19 screens are the implementation references for the current desktop UI. Files with a `-v2` suffix were regenerated from the feasibility reference image to lock the shared shell and visual system.
 

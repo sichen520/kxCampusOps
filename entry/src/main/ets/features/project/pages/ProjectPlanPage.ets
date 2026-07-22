@@ -52,7 +52,7 @@ export struct ProjectPlanPage {
   @Builder
   ProjectIdentity() {
     Column({ space: 3 }) {
-      Text(this.opportunityTitle.length > 0 ? this.opportunityTitle : 'CampusOps 项目')
+      Text(this.opportunityTitle.length > 0 ? this.opportunityTitle : '校汇通项目')
         .fontSize(14).fontWeight(FontWeight.Medium).fontColor(COLOR_TEXT).maxLines(1)
       Text(this.canManageProject ? `负责人  ${this.managerName}` : '当前账号为只读成员')
         .fontSize(12).fontColor(COLOR_MUTED)

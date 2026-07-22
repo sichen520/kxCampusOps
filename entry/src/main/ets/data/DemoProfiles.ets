@@ -29,7 +29,7 @@ export const DEFAULT_USER_PROFILES: UserProfile[] = [
   {
     accountId: 'admin',
     displayName: '平台管理员',
-    college: '可行 CampusOps',
+    college: '校汇通项目组',
     grade: '平台账号',
     major: '内容审核与平台治理',
     availability: '工作日'

@@ -77,7 +77,7 @@ export struct LoginPage {
   BrandPanel() {
     Column() {
       Column({ space: 18 }) {
-        Text('行')
+        Text('汇')
           .width(46)
           .height(46)
           .padding({ top: 8 })
@@ -88,7 +88,7 @@ export struct LoginPage {
           .backgroundColor(COLOR_PRIMARY)
           .borderRadius(5)
         Column({ space: 8 }) {
-          Text('可行 CampusOps')
+          Text('校汇通')
             .fontSize(30)
             .fontWeight(FontWeight.Bold)
             .fontColor(COLOR_TEXT)
@@ -211,7 +211,7 @@ export struct LoginPage {
         Scroll() {
           Column({ space: 0 }) {
             Column({ space: 10 }) {
-              Text('行')
+              Text('汇')
                 .width(40)
                 .height(40)
                 .padding({ top: 7 })
@@ -221,7 +221,7 @@ export struct LoginPage {
                 .fontColor('#FFFFFF')
                 .backgroundColor(COLOR_PRIMARY)
                 .borderRadius(5)
-              Text('可行 CampusOps')
+              Text('校汇通')
                 .fontSize(24)
                 .fontWeight(FontWeight.Bold)
                 .fontColor(COLOR_TEXT)

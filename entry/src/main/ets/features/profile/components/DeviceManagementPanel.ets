@@ -14,11 +14,11 @@ import {
   COLOR_TEXT
 } from '../../../shared/Theme';
 
-PersistentStorage.persistProp<boolean>('kxCampusOps.devices.phoneActive', true);
+PersistentStorage.persistProp<boolean>('xiaoHuiTong.devices.phoneActive', true);
 
 @Component
 export struct DeviceManagementPanel {
-  @StorageLink('kxCampusOps.devices.phoneActive') phoneActive: boolean = true;
+  @StorageLink('xiaoHuiTong.devices.phoneActive') phoneActive: boolean = true;
   @State refreshed: boolean = false;
   onBack: () => void = () => {};
 

@@ -52,7 +52,7 @@ export struct MobileHeader {
         Column()
           .width(7).height(7).borderRadius(4).backgroundColor(COLOR_PRIMARY)
         Column({ space: 1 }) {
-          Text('CampusOps')
+          Text('校汇通')
             .fontSize(18)
             .fontWeight(FontWeight.Bold)
             .fontColor(COLOR_TEXT)

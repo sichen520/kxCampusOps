@@ -92,8 +92,8 @@ export const TEAM_CANDIDATE: TeamCandidate = {
 };
 
 export const CURRENT_TEAM: TeamOverview = {
-  id: 'team-campusops',
-  name: '可行 CampusOps 小组',
+  id: 'team-xiaohuitong',
+  name: '校汇通小组',
   opportunity: '鸿蒙高校创新赛 · 应用创新赛道',
   teacher: '指导老师待确认',
   teacherStatus: '需要队长补充确认',
@@ -471,7 +471,7 @@ export const RECRUITMENT_POSTS: RecruitmentPost[] = [
     id: 'competition-campus-ai',
     createdBy: 'wangchen',
     kind: RecruitmentKind.COMPETITION,
-    title: '鸿蒙高校创新赛 · 可行 CampusOps',
+    title: '鸿蒙高校创新赛 · 校汇通',
     summary: '已有 ArkTS 工程和产品主线，招募一名产品设计成员共同完成交互稿和演示表达。',
     publisher: '王晨',
     publisherRole: '学生 · 队伍创建者',
