@@ -28,7 +28,7 @@ export struct ManualAssignmentPanel {
   @Link firstOwner: string;
   @Link secondOwner: string;
   @Link thirdOwner: string;
-  onConfirm: () => void = () => {};
+  onConfirm: (tasks: ProjectTask[]) => void = (_tasks: ProjectTask[]) => {};
   @State selectedTaskIndex: number = 0;
   @State editedTitles: string[] = [];
   @State editedOwners: string[] = [];
@@ -111,7 +111,29 @@ export struct ManualAssignmentPanel {
   private canPublish(): boolean {
     return this.canManageProject && this.projectGoal.trim().length > 0 && this.deliverable.trim().length > 0 &&
       this.editedTitles.every((title: string) => title.trim().length > 0) &&
-      this.editedOwners.every((owner: string) => owner.trim().length > 0);
+      this.editedOwners.every((owner: string) => owner.trim().length > 0) &&
+      this.editedDeadlines.every((deadline: string) => deadline.trim().length > 0) &&
+      this.editedAcceptances.every((acceptance: string) => acceptance.trim().length > 0);
+  }
+
+  private confirmedTasks(): ProjectTask[] {
+    return PROJECT_TASKS.map((task: ProjectTask, index: number) => {
+      const confirmedTask: ProjectTask = {
+        id: task.id,
+        title: this.editedTitles[index],
+        owner: this.editedOwners[index],
+        dueDate: this.editedDeadlines[index],
+        acceptance: this.editedAcceptances[index]
+      };
+      return confirmedTask;
+    });
+  }
+
+  private publishTasks(): void {
+    this.saveCurrent();
+    if (this.canPublish()) {
+      this.onConfirm(this.confirmedTasks());
+    }
   }
 
   private workload(name: string): number {
@@ -143,7 +165,7 @@ export struct ManualAssignmentPanel {
         .onChange((value: string) => { this.deliverable = value; })
     }
     .width('100%').padding(18).backgroundColor(COLOR_SURFACE)
-    .border({ width: 1, color: COLOR_BORDER }).borderRadius(8).alignItems(HorizontalAlign.Start)
+    .border({ width: 1, color: COLOR_BORDER }).borderRadius(4).alignItems(HorizontalAlign.Start)
   }
 
   @Builder
@@ -179,7 +201,7 @@ export struct ManualAssignmentPanel {
       }, (task: ProjectTask) => task.id)
     }
     .width('100%').padding(18).backgroundColor(COLOR_SURFACE)
-    .border({ width: 1, color: COLOR_BORDER }).borderRadius(8).alignItems(HorizontalAlign.Start)
+    .border({ width: 1, color: COLOR_BORDER }).borderRadius(4).alignItems(HorizontalAlign.Start)
   }
 
   @Builder
@@ -241,7 +263,7 @@ export struct ManualAssignmentPanel {
       }
     }
     .width('100%').padding(18).backgroundColor(COLOR_SURFACE)
-    .border({ width: 1, color: COLOR_BORDER }).borderRadius(8).alignItems(HorizontalAlign.Start)
+    .border({ width: 1, color: COLOR_BORDER }).borderRadius(4).alignItems(HorizontalAlign.Start)
   }
 
   @Builder
@@ -265,7 +287,7 @@ export struct ManualAssignmentPanel {
         .fontSize(12).lineHeight(18).fontColor(this.canPublish() ? COLOR_PRIMARY : COLOR_AMBER)
     }
     .width('100%').padding(16).backgroundColor('#F8FBFA')
-    .border({ width: 1, color: COLOR_BORDER }).borderRadius(8).alignItems(HorizontalAlign.Start)
+    .border({ width: 1, color: COLOR_BORDER }).borderRadius(4).alignItems(HorizontalAlign.Start)
   }
 
   build() {
@@ -286,7 +308,7 @@ export struct ManualAssignmentPanel {
         .width('100%').height(46).fontSize(14)
         .fontColor(this.canPublish() ? '#FFFFFF' : COLOR_MUTED)
         .backgroundColor(this.canPublish() ? COLOR_PRIMARY : '#E4E8E5').borderRadius(5)
-        .enabled(this.canPublish()).onClick(() => { this.saveCurrent(); this.onConfirm(); })
+        .enabled(this.canPublish()).onClick(() => { this.publishTasks(); })
     }
     .width('100%').alignItems(HorizontalAlign.Start)
   }

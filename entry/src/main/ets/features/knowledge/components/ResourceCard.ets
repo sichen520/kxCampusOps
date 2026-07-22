@@ -1,13 +1,11 @@
 import { KnowledgeResource } from '../../../domain/WorkflowModels';
-import { StatusPill } from '../../../shared/components/StatusPill';
 import {
   COLOR_BLUE,
-  COLOR_BLUE_SOFT,
   COLOR_BORDER,
   COLOR_MUTED,
   COLOR_PRIMARY,
-  COLOR_PRIMARY_SOFT,
   COLOR_SURFACE,
+  COLOR_SURFACE_ALT,
   COLOR_TEXT
 } from '../../../shared/Theme';
 
@@ -17,57 +15,133 @@ export struct ResourceCard {
   @Prop isWide: boolean = false;
   onOpen: () => void = () => {};
 
-  build() {
-    Column({ space: 10 }) {
-      Row() {
-        StatusPill({ text: this.resource.resourceType, fillColor: COLOR_PRIMARY_SOFT, textColor: COLOR_PRIMARY })
-        Blank()
+  @Builder
+  DesktopRow() {
+    Row() {
+      Column({ space: 5 }) {
+        Row({ space: 7 }) {
+          Text(this.resource.resourceType)
+            .fontSize(11)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(COLOR_PRIMARY)
+          Text(this.resource.category).fontSize(11).fontColor(COLOR_BLUE)
+        }
+        Text(this.resource.title)
+          .fontSize(15)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(COLOR_TEXT)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+        Text(this.resource.summary)
+          .fontSize(12)
+          .lineHeight(18)
+          .fontColor(COLOR_MUTED)
+          .maxLines(2)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .width('48%')
+      .padding({ right: 20 })
+      .alignItems(HorizontalAlign.Start)
+
+      Column({ space: 5 }) {
+        Text(this.resource.courseName)
+          .fontSize(13)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(COLOR_TEXT)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+        Text(`${this.resource.author} · ${this.resource.permission}`)
+          .fontSize(11)
+          .fontColor(COLOR_MUTED)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+        Text(this.resource.fileName)
+          .fontSize(11)
+          .fontColor(COLOR_BLUE)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .width('25%')
+      .padding({ right: 16 })
+      .alignItems(HorizontalAlign.Start)
+
+      Column({ space: 5 }) {
+        Text(`${this.resource.averageRating} 分 · ${this.resource.ratingCount} 人评价`)
+          .fontSize(12)
+          .fontColor(COLOR_TEXT)
+        Text(`${this.resource.viewCount} 浏览 · ${this.resource.downloadCount} 下载`)
+          .fontSize(11)
+          .fontColor(COLOR_MUTED)
         Text(this.resource.createdAt).fontSize(11).fontColor(COLOR_MUTED)
       }
+      .width('19%')
+      .alignItems(HorizontalAlign.Start)
+
+      Text('查看 →')
+        .width('8%')
+        .fontSize(12)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(COLOR_PRIMARY)
+        .textAlign(TextAlign.End)
+    }
+    .width('100%')
+    .constraintSize({ minHeight: 96 })
+    .padding({ left: 16, right: 16, top: 13, bottom: 13 })
+    .backgroundColor(COLOR_SURFACE)
+    .border({ width: { bottom: 1 }, color: COLOR_BORDER })
+    .alignItems(VerticalAlign.Center)
+    .onClick(() => { this.onOpen(); })
+  }
+
+  @Builder
+  MobileRow() {
+    Column({ space: 8 }) {
+      Row() {
+        Row({ space: 7 }) {
+          Text(this.resource.resourceType).fontSize(11).fontWeight(FontWeight.Medium).fontColor(COLOR_PRIMARY)
+          Text(this.resource.category).fontSize(11).fontColor(COLOR_BLUE)
+        }
+        Blank()
+        Text(this.resource.createdAt).fontSize(10).fontColor(COLOR_MUTED)
+      }
       .width('100%')
-      Text(this.resource.category).fontSize(12).fontColor(COLOR_BLUE)
       Text(this.resource.title)
-        .fontSize(17)
+        .fontSize(15)
         .fontWeight(FontWeight.Bold)
         .fontColor(COLOR_TEXT)
         .maxLines(2)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
       Text(this.resource.summary)
-        .fontSize(13)
-        .lineHeight(19)
+        .fontSize(12)
+        .lineHeight(18)
         .fontColor(COLOR_MUTED)
-        .maxLines(3)
+        .maxLines(2)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
-      Row({ space: 6 }) {
-        ForEach(this.resource.tags.slice(0, 2), (tag: string) => {
-          Text(tag)
-            .fontSize(11)
-            .fontColor(COLOR_BLUE)
-            .padding({ left: 6, right: 6, top: 3, bottom: 3 })
-            .backgroundColor(COLOR_BLUE_SOFT)
-            .borderRadius(3)
-        }, (tag: string) => tag)
-      }
-      .width('100%')
-      Row({ space: 14 }) {
-        Text(`${this.resource.viewCount} 浏览`).fontSize(11).fontColor(COLOR_MUTED)
+      Row() {
+        Text(this.resource.courseName)
+          .layoutWeight(1)
+          .fontSize(11)
+          .fontColor(COLOR_MUTED)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
         Text(`${this.resource.downloadCount} 下载`).fontSize(11).fontColor(COLOR_MUTED)
-        Text(`${this.resource.averageRating} 分`).fontSize(11).fontColor(COLOR_MUTED)
-        Blank()
-        Text('查看详情').fontSize(12).fontWeight(FontWeight.Medium).fontColor(COLOR_PRIMARY)
+        Text('查看 →').fontSize(12).fontWeight(FontWeight.Medium).fontColor(COLOR_PRIMARY).margin({ left: 12 })
       }
       .width('100%')
     }
-    .width(this.isWide ? '49%' : '100%')
-    .constraintSize({ minHeight: 218 })
-    .margin({ bottom: 16 })
-    .padding(18)
-    .backgroundColor(COLOR_SURFACE)
-    .border({ width: 1, color: COLOR_BORDER })
-    .borderRadius(8)
+    .width('100%')
+    .padding({ top: 14, bottom: 14 })
+    .backgroundColor(COLOR_SURFACE_ALT)
+    .border({ width: { bottom: 1 }, color: COLOR_BORDER })
     .alignItems(HorizontalAlign.Start)
-    .onClick(() => {
-      this.onOpen();
-    })
+    .onClick(() => { this.onOpen(); })
+  }
+
+  build() {
+    if (this.isWide) {
+      this.DesktopRow()
+    } else {
+      this.MobileRow()
+    }
   }
 }

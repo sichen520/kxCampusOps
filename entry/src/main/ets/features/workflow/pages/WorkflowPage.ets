@@ -1,4 +1,4 @@
-import { AccountRole, DemoAccount, RecruitmentPost, WorkflowStep } from '../../../domain/WorkflowModels';
+import { AccountRole, DemoAccount, ProjectTask, RecruitmentPost, WorkflowStep } from '../../../domain/WorkflowModels';
 import { FeasibilityPage } from '../../feasibility/pages/FeasibilityPage';
 import { OpportunityImportPage } from '../../opportunity/pages/OpportunityImportPage';
 import { OpportunityReviewPage } from '../../opportunity/pages/OpportunityReviewPage';
@@ -23,9 +23,12 @@ export struct WorkflowPage {
   @Prop leaderName: string = '';
   @Prop memberName: string = '';
   @Prop advisorName: string = '';
+  @Prop projectTasks: ProjectTask[] = [];
+  @Prop currentTaskOwnerName: string = '';
   @Prop accountRole: AccountRole = AccountRole.STUDENT;
   @Prop demoAccount: DemoAccount = DemoAccount.STUDENT_APPLICANT;
   onTeamRecruitmentCreated: (post: RecruitmentPost) => void = (_post: RecruitmentPost) => {};
+  onPlanConfirmed: (tasks: ProjectTask[]) => void = (_tasks: ProjectTask[]) => {};
 
   build() {
     if (this.workflowStep === WorkflowStep.IMPORT) {
@@ -74,7 +77,10 @@ export struct WorkflowPage {
         managerName: this.managerName,
         leaderName: this.leaderName,
         memberName: this.memberName,
-        advisorName: this.advisorName
+        advisorName: this.advisorName,
+        onPlanConfirmed: (tasks: ProjectTask[]) => {
+          this.onPlanConfirmed(tasks);
+        }
       })
     } else {
       ProjectBoardPage({
@@ -85,7 +91,11 @@ export struct WorkflowPage {
         opportunityTitle: this.opportunityTitle,
         isWide: this.isWide,
         canManageProject: this.canManageProject,
-        hasProject: this.teamConfirmed
+        currentTaskOwnerName: this.currentTaskOwnerName,
+        hasTeam: this.teamConfirmed,
+        teamConfirmed: this.teamConfirmed,
+        tasks: this.projectTasks,
+        hasProject: this.teamConfirmed && this.taskPlanConfirmed && this.projectTasks.length > 0
       })
     }
   }

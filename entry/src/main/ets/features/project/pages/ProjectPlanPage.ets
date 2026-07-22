@@ -1,4 +1,4 @@
-import { WorkflowStep } from '../../../domain/WorkflowModels';
+import { ProjectTask, WorkflowStep } from '../../../domain/WorkflowModels';
 import { AiAssignmentPanel } from '../components/AiAssignmentPanel';
 import { ManualAssignmentPanel } from '../components/ManualAssignmentPanel';
 import { StatusPill } from '../../../shared/components/StatusPill';
@@ -6,13 +6,12 @@ import { WorkflowHeader } from '../../../shared/components/WorkflowHeader';
 import {
   COLOR_AMBER,
   COLOR_AMBER_SOFT,
-  COLOR_BLUE,
-  COLOR_BLUE_SOFT,
   COLOR_BORDER,
   COLOR_MUTED,
   COLOR_PRIMARY,
   COLOR_PRIMARY_SOFT,
   COLOR_SURFACE,
+  COLOR_SURFACE_ALT,
   COLOR_TEXT,
   PAGE_MAX_WIDTH
 } from '../../../shared/Theme';
@@ -38,54 +37,51 @@ export struct ProjectPlanPage {
   @State firstOwner: string = '';
   @State secondOwner: string = '';
   @State thirdOwner: string = '';
-  onPlanConfirmed: () => void = () => {};
+  onPlanConfirmed: (tasks: ProjectTask[]) => void = (_tasks: ProjectTask[]) => {};
 
-  private confirmPlan(): void {
+  private confirmPlan(tasks: ProjectTask[]): void {
+    if (!this.canManageProject || tasks.length === 0) {
+      return;
+    }
     this.taskPlanConfirmed = true;
-    this.onPlanConfirmed();
+    this.onPlanConfirmed(tasks);
     this.workflowStep = WorkflowStep.BOARD;
     this.selectedTab = 4;
   }
 
   @Builder
-  ModeSwitch() {
-    Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.SpaceBetween }) {
-      Column({ space: 4 }) {
-        Row({ space: 8 }) {
-          Text('AI').fontSize(12).fontWeight(FontWeight.Bold)
-            .fontColor(this.assignmentMode === 0 ? '#FFFFFF' : COLOR_BLUE)
-            .backgroundColor(this.assignmentMode === 0 ? COLOR_BLUE : COLOR_BLUE_SOFT)
-            .borderRadius(4).padding({ left: 7, right: 7, top: 4, bottom: 4 })
-          Text('AI 辅助分工').fontSize(15).fontWeight(FontWeight.Bold)
-            .fontColor(this.assignmentMode === 0 ? COLOR_TEXT : COLOR_MUTED)
-        }
-        Text('提交完整上下文，生成带匹配理由和风险说明的任务建议')
-          .fontSize(11).fontColor(COLOR_MUTED).maxLines(2)
-      }
-      .width(this.isWide ? '49%' : '100%').height(72).padding(12).margin({ bottom: this.isWide ? 0 : 8 })
-      .backgroundColor(this.assignmentMode === 0 ? COLOR_BLUE_SOFT : COLOR_SURFACE)
-      .border({ width: 1, color: this.assignmentMode === 0 ? COLOR_BLUE : COLOR_BORDER })
-      .borderRadius(7).alignItems(HorizontalAlign.Start)
-      .onClick(() => { this.assignmentMode = 0; })
-      Column({ space: 4 }) {
-        Row({ space: 8 }) {
-          Text('人').fontSize(12).fontWeight(FontWeight.Bold)
-            .fontColor(this.assignmentMode === 1 ? '#FFFFFF' : COLOR_PRIMARY)
-            .backgroundColor(this.assignmentMode === 1 ? COLOR_PRIMARY : COLOR_PRIMARY_SOFT)
-            .borderRadius(4).padding({ left: 7, right: 7, top: 4, bottom: 4 })
-          Text('人工任务编排').fontSize(15).fontWeight(FontWeight.Bold)
-            .fontColor(this.assignmentMode === 1 ? COLOR_TEXT : COLOR_MUTED)
-        }
-        Text('逐项创建和编辑任务，手动指定负责人、优先级与验收条件')
-          .fontSize(11).fontColor(COLOR_MUTED).maxLines(2)
-      }
-      .width(this.isWide ? '49%' : '100%').height(72).padding(12)
-      .backgroundColor(this.assignmentMode === 1 ? COLOR_PRIMARY_SOFT : COLOR_SURFACE)
-      .border({ width: 1, color: this.assignmentMode === 1 ? COLOR_PRIMARY : COLOR_BORDER })
-      .borderRadius(7).alignItems(HorizontalAlign.Start)
-      .onClick(() => { this.assignmentMode = 1; })
+  ProjectIdentity() {
+    Column({ space: 3 }) {
+      Text(this.opportunityTitle.length > 0 ? this.opportunityTitle : 'CampusOps 项目')
+        .fontSize(14).fontWeight(FontWeight.Medium).fontColor(COLOR_TEXT).maxLines(1)
+      Text(this.canManageProject ? `负责人  ${this.managerName}` : '当前账号为只读成员')
+        .fontSize(12).fontColor(COLOR_MUTED)
     }
-    .width('100%')
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  ModeSwitch() {
+    Row({ space: 0 }) {
+      Button('AI 辅助草案')
+        .layoutWeight(1).height(38).fontSize(13).fontWeight(FontWeight.Medium)
+        .fontColor(this.assignmentMode === 0 ? COLOR_TEXT : COLOR_MUTED)
+        .backgroundColor(this.assignmentMode === 0 ? COLOR_SURFACE : Color.Transparent)
+        .border({ width: this.assignmentMode === 0 ? 1 : 0, color: COLOR_BORDER })
+        .borderRadius(4)
+        .onClick(() => { this.assignmentMode = 0; })
+      Button('手动分工')
+        .layoutWeight(1).height(38).fontSize(13).fontWeight(FontWeight.Medium)
+        .fontColor(this.assignmentMode === 1 ? COLOR_TEXT : COLOR_MUTED)
+        .backgroundColor(this.assignmentMode === 1 ? COLOR_SURFACE : Color.Transparent)
+        .border({ width: this.assignmentMode === 1 ? 1 : 0, color: COLOR_BORDER })
+        .borderRadius(4)
+        .onClick(() => { this.assignmentMode = 1; })
+    }
+    .width(this.isWide ? 300 : '100%')
+    .padding(3)
+    .backgroundColor(COLOR_SURFACE_ALT)
+    .borderRadius(6)
   }
 
   build() {
@@ -94,28 +90,40 @@ export struct ProjectPlanPage {
         Column({ space: 16 }) {
           WorkflowHeader({
             step: WorkflowStep.PROJECT_PLAN,
-            title: '项目分工工作台',
-            description: 'AI 模式负责生成可解释建议；人工模式提供完整任务编辑器。两种方式都必须由负责人确认后发布。'
+            title: '任务分工',
+            description: '确认项目边界、负责人和验收条件后发布任务。',
+            isWide: this.isWide
           })
-          if (this.opportunityTitle.length > 0) {
-            Row({ space: 8 }) {
-              Text('项目').fontSize(11).fontColor(COLOR_BLUE).backgroundColor(COLOR_BLUE_SOFT)
-                .borderRadius(3).padding({ left: 7, right: 7, top: 4, bottom: 4 })
-              Text(this.opportunityTitle).layoutWeight(1).fontSize(14).fontWeight(FontWeight.Medium).fontColor(COLOR_TEXT)
+          if (this.isWide) {
+            Row({ space: 14 }) {
+              Column() { this.ProjectIdentity() }.layoutWeight(1)
+              StatusPill({
+                text: this.canManageProject ? '可发布' : '只读',
+                fillColor: this.canManageProject ? COLOR_PRIMARY_SOFT : COLOR_AMBER_SOFT,
+                textColor: this.canManageProject ? COLOR_PRIMARY : COLOR_AMBER
+              })
+              this.ModeSwitch()
             }
-            .width('100%')
+            .width('100%').padding({ left: 14, right: 14, top: 10, bottom: 10 })
+            .backgroundColor(COLOR_SURFACE)
+            .border({ width: 1, color: COLOR_BORDER }).borderRadius(5)
+          } else {
+            Column({ space: 10 }) {
+              Row({ space: 10 }) {
+                Column() { this.ProjectIdentity() }.layoutWeight(1)
+                StatusPill({
+                  text: this.canManageProject ? '可发布' : '只读',
+                  fillColor: this.canManageProject ? COLOR_PRIMARY_SOFT : COLOR_AMBER_SOFT,
+                  textColor: this.canManageProject ? COLOR_PRIMARY : COLOR_AMBER
+                })
+              }
+              .width('100%')
+              this.ModeSwitch()
+            }
+            .width('100%').padding(12)
+            .backgroundColor(COLOR_SURFACE)
+            .border({ width: 1, color: COLOR_BORDER }).borderRadius(5)
           }
-          Row({ space: 10 }) {
-            StatusPill({ text: this.canManageProject ? '可编辑并发布' : '只读预览',
-              fillColor: this.canManageProject ? COLOR_PRIMARY_SOFT : COLOR_AMBER_SOFT,
-              textColor: this.canManageProject ? COLOR_PRIMARY : COLOR_AMBER })
-            Text(this.canManageProject ? `当前负责人：${this.managerName}` :
-              '只有本队队长或已接受邀请的指导老师可以修改和发布分工。')
-              .layoutWeight(1).fontSize(13).fontColor(COLOR_TEXT)
-          }
-          .width('100%').padding(12)
-          .backgroundColor(this.canManageProject ? '#F5FAF8' : COLOR_AMBER_SOFT).borderRadius(6)
-          this.ModeSwitch()
           if (this.assignmentMode === 0) {
             AiAssignmentPanel({
               isWide: this.isWide,
@@ -131,7 +139,7 @@ export struct ProjectPlanPage {
               firstOwner: $firstOwner,
               secondOwner: $secondOwner,
               thirdOwner: $thirdOwner,
-              onConfirm: () => { this.confirmPlan(); }
+              onConfirm: (tasks: ProjectTask[]) => { this.confirmPlan(tasks); }
             })
           } else {
             ManualAssignmentPanel({
@@ -147,7 +155,7 @@ export struct ProjectPlanPage {
               firstOwner: $firstOwner,
               secondOwner: $secondOwner,
               thirdOwner: $thirdOwner,
-              onConfirm: () => { this.confirmPlan(); }
+              onConfirm: (tasks: ProjectTask[]) => { this.confirmPlan(tasks); }
             })
           }
         }

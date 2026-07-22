@@ -5,24 +5,24 @@ import {
   COLOR_PRIMARY,
   COLOR_PRIMARY_SOFT,
   COLOR_SURFACE,
+  COLOR_SURFACE_ALT,
   COLOR_TEXT
 } from '../Theme';
 
 interface DesktopNavigationItem {
   index: number;
   label: string;
-  caption: string;
   adminOnly: boolean;
 }
 
 const DESKTOP_NAVIGATION: DesktopNavigationItem[] = [
-  { index: 0, label: '首页', caption: '比赛与活动', adminOnly: false },
-  { index: 1, label: '可行', caption: '机会履约', adminOnly: false },
-  { index: 2, label: '知享', caption: '知识资源', adminOnly: false },
-  { index: 3, label: '队伍', caption: '成员与指导老师', adminOnly: false },
-  { index: 4, label: 'CampusOps', caption: '项目执行', adminOnly: false },
-  { index: 5, label: '我的', caption: '个人中心', adminOnly: false },
-  { index: 6, label: '管理后台', caption: '审核与平台治理', adminOnly: true }
+  { index: 0, label: '首页', adminOnly: false },
+  { index: 1, label: '可行', adminOnly: false },
+  { index: 2, label: '知享', adminOnly: false },
+  { index: 3, label: '队伍', adminOnly: false },
+  { index: 4, label: '执行', adminOnly: false },
+  { index: 5, label: '我的', adminOnly: false },
+  { index: 6, label: '管理', adminOnly: true }
 ];
 
 @Component
@@ -50,47 +50,52 @@ export struct DesktopSidebar {
 
   build() {
     Column() {
-      Row({ space: 12 }) {
-        Text('KX')
-          .width(42).height(42).textAlign(TextAlign.Center).padding({ top: 11 })
-          .fontSize(14).fontWeight(FontWeight.Bold).fontColor('#FFFFFF')
-          .backgroundColor(COLOR_PRIMARY).borderRadius(8)
-        Column({ space: 3 }) {
+      Row({ space: 11 }) {
+        Text('行')
+          .width(38)
+          .height(38)
+          .textAlign(TextAlign.Center)
+          .padding({ top: 4 })
+          .fontSize(22)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#FFFFFF')
+          .backgroundColor(COLOR_PRIMARY)
+          .borderRadius(4)
+        Column({ space: 2 }) {
           Text('可行 CampusOps')
-            .fontSize(19).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
-          Text('校园机会协作工作台')
-            .fontSize(11).fontColor(COLOR_MUTED)
+            .fontSize(18)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(COLOR_TEXT)
+            .letterSpacing(0.2)
+          Text('校园行动工作台')
+            .fontSize(10)
+            .fontColor(COLOR_MUTED)
+            .letterSpacing(0.5)
         }
         .alignItems(HorizontalAlign.Start)
       }
       .width('100%')
-      .padding({ left: 18, right: 18, top: 22, bottom: 22 })
+      .padding({ left: 18, right: 18, top: 20, bottom: 24 })
 
       Column({ space: 5 }) {
         ForEach(DESKTOP_NAVIGATION, (item: DesktopNavigationItem) => {
           if (!item.adminOnly || this.accountRole === AccountRole.ADMIN) {
-            Row({ space: 10 }) {
-            Column()
-              .width(4)
-              .height(30)
-              .borderRadius(2)
-              .backgroundColor(this.selectedTab === item.index ? COLOR_PRIMARY : Color.Transparent)
-            Column({ space: 2 }) {
+            Row({ space: 11 }) {
+              Column()
+                .width(3)
+                .height(28)
+                .borderRadius(1)
+                .backgroundColor(this.selectedTab === item.index ? COLOR_PRIMARY : Color.Transparent)
               Text(item.label)
-                .fontSize(14)
+                .fontSize(15)
                 .fontWeight(this.selectedTab === item.index ? FontWeight.Bold : FontWeight.Medium)
                 .fontColor(this.selectedTab === item.index ? COLOR_PRIMARY : COLOR_TEXT)
-              Text(item.caption)
-                .fontSize(10)
-                .fontColor(COLOR_MUTED)
             }
-            .alignItems(HorizontalAlign.Start)
-          }
-          .width('100%')
-          .height(52)
-          .padding({ left: 12, right: 12 })
-          .borderRadius(7)
-          .backgroundColor(this.selectedTab === item.index ? COLOR_PRIMARY_SOFT : Color.Transparent)
+            .width('100%')
+            .height(48)
+            .padding({ left: 10, right: 12 })
+            .borderRadius(4)
+            .backgroundColor(this.selectedTab === item.index ? COLOR_SURFACE_ALT : Color.Transparent)
             .onClick(() => {
               if (!this.isLoggedIn && this.requiresLogin(item.index)) {
                 this.onRequireLogin(item.index);
@@ -102,27 +107,41 @@ export struct DesktopSidebar {
         }, (item: DesktopNavigationItem) => item.index.toString())
       }
       .width('100%')
-      .padding({ left: 10, right: 10 })
+      .padding({ left: 10, right: 10, top: 4 })
 
       Blank()
 
-      Column({ space: 5 }) {
-        Text(this.isLoggedIn ? this.accountLabel() : '当前为游客模式')
+      Row({ space: 10 }) {
+        Text(this.isLoggedIn ? '我' : '客')
+          .width(30)
+          .height(30)
+          .textAlign(TextAlign.Center)
+          .padding({ top: 6 })
           .fontSize(12)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(COLOR_PRIMARY)
-        Text(this.isLoggedIn ? '可申请、报名与管理项目' : '可浏览公开招募和知识内容')
-          .fontSize(11)
-          .fontColor(COLOR_MUTED)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(this.isLoggedIn ? COLOR_PRIMARY : COLOR_MUTED)
+          .backgroundColor(this.isLoggedIn ? COLOR_PRIMARY_SOFT : COLOR_SURFACE_ALT)
+          .borderRadius(4)
+        Column({ space: 2 }) {
+          Text(this.isLoggedIn ? this.accountLabel() : '游客')
+            .fontSize(12)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(COLOR_TEXT)
+            .constraintSize({ maxWidth: 170 })
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+          Text(this.isLoggedIn ? '当前身份' : '公开浏览')
+            .fontSize(10)
+            .fontColor(COLOR_MUTED)
+            .letterSpacing(0.5)
+        }
+        .alignItems(HorizontalAlign.Start)
       }
       .width('100%')
-      .margin({ left: 12, right: 12, bottom: 14 })
-      .padding(14)
-      .backgroundColor(this.isLoggedIn ? COLOR_PRIMARY_SOFT : '#F2F4F3')
-      .borderRadius(7)
-      .alignItems(HorizontalAlign.Start)
+      .padding({ left: 18, right: 18, top: 14, bottom: 16 })
+      .border({ width: { top: 1 }, color: COLOR_BORDER })
     }
-    .width(248)
+    .width(252)
     .height('100%')
     .backgroundColor(COLOR_SURFACE)
     .border({ width: { right: 1 }, color: COLOR_BORDER })

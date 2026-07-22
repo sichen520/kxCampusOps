@@ -65,6 +65,16 @@ export function canConfirmTeam(approvedMemberCount: number): boolean {
   return approvedMemberCount >= 1;
 }
 
+export function canConfirmTeamFormation(
+  isTeamLeader: boolean,
+  teamPostId: string,
+  applicationPostId: string,
+  applicationState: ApplicationState
+): boolean {
+  return isTeamLeader && teamPostId.length > 0 && teamPostId === applicationPostId &&
+    applicationState === ApplicationState.APPROVED;
+}
+
 export function canCreateProject(teamConfirmed: boolean): boolean {
   return teamConfirmed;
 }

@@ -7,6 +7,7 @@ import {
   DemoAccount,
   DiscussionPost,
   KnowledgeResource,
+  ProjectTask,
   RecruitmentKind,
   RecruitmentPost,
   UserProfile,
@@ -15,6 +16,7 @@ import {
 import {
   accountIdForDemoAccount,
   approveApplicationState,
+  canConfirmTeamFormation,
   rejectApplicationState,
   roleForDemoAccount,
   submitApplicationState
@@ -47,9 +49,11 @@ PersistentStorage.persistProp<string>('kxCampusOps.activityApplicationState', Ap
 PersistentStorage.persistProp<string>('kxCampusOps.activityApplicantId', '');
 PersistentStorage.persistProp<string>('kxCampusOps.activityApplicantName', '');
 PersistentStorage.persistProp<string[]>('kxCampusOps.acceptedAdvisorPostIds', []);
-PersistentStorage.persistProp<boolean>('kxCampusOps.projectTaskPlanConfirmed.v2', false);
-PersistentStorage.persistProp<boolean>('kxCampusOps.projectFirstTaskStarted.v2', false);
-PersistentStorage.persistProp<string>('kxCampusOps.projectTeamPostId.v2', '');
+PersistentStorage.persistProp<string[]>('kxCampusOps.confirmedTeamPostIds.v3', []);
+PersistentStorage.persistProp<boolean>('kxCampusOps.projectTaskPlanConfirmed.v3', false);
+PersistentStorage.persistProp<boolean>('kxCampusOps.projectFirstTaskStarted.v3', false);
+PersistentStorage.persistProp<string>('kxCampusOps.projectTeamPostId.v3', '');
+PersistentStorage.persistProp<ProjectTask[]>('kxCampusOps.projectTasks.v3', []);
 PersistentStorage.persistProp<string>('kxCampusOps.workflowOwnerAccountId', '');
 
 @Entry
@@ -62,11 +66,9 @@ struct Index {
   @State personalPlanCreated: boolean = false;
   @State candidateApproved: boolean = false;
   @State workflowTeamConfirmed: boolean = false;
-  @State workflowTaskPlanConfirmed: boolean = false;
-  @State workflowFirstTaskStarted: boolean = false;
-  @StorageLink('kxCampusOps.projectTaskPlanConfirmed.v2') projectTaskPlanConfirmed: boolean = false;
-  @StorageLink('kxCampusOps.projectFirstTaskStarted.v2') projectFirstTaskStarted: boolean = false;
-  @StorageLink('kxCampusOps.projectTeamPostId.v2') projectTeamPostId: string = '';
+  @StorageLink('kxCampusOps.projectTaskPlanConfirmed.v3') projectTaskPlanConfirmed: boolean = false;
+  @StorageLink('kxCampusOps.projectFirstTaskStarted.v3') projectFirstTaskStarted: boolean = false;
+  @StorageLink('kxCampusOps.projectTeamPostId.v3') projectTeamPostId: string = '';
   @StorageLink('kxCampusOps.workflowOwnerAccountId') workflowOwnerAccountId: string = '';
   @State isWide: boolean = false;
   @State isLoggedIn: boolean = false;
@@ -86,6 +88,8 @@ struct Index {
   @StorageLink('kxCampusOps.activityApplicantId') activityApplicationApplicantId: string = '';
   @StorageLink('kxCampusOps.activityApplicantName') activityApplicationApplicantName: string = '';
   @StorageLink('kxCampusOps.acceptedAdvisorPostIds') acceptedAdvisorPostIds: string[] = [];
+  @StorageLink('kxCampusOps.confirmedTeamPostIds.v3') confirmedTeamPostIds: string[] = [];
+  @StorageLink('kxCampusOps.projectTasks.v3') projectTasks: ProjectTask[] = [];
   @State showLogin: boolean = false;
   @State pendingTab: number = -1;
   @State pendingOpportunityTitle: string = '';
@@ -108,11 +112,19 @@ struct Index {
   }
 
   private allRecruitmentPosts(): RecruitmentPost[] {
-    return RECRUITMENT_POSTS.concat(this.publishedRecruitments);
+    return this.publishedRecruitments.concat(RECRUITMENT_POSTS);
   }
 
   private currentTeamPost(): RecruitmentPost | undefined {
     const accountId: string = accountIdForDemoAccount(this.demoAccount);
+    if (this.competitionApplicationState() === ApplicationState.APPROVED &&
+      this.competitionApplicationApplicantId === accountId) {
+      const joined: RecruitmentPost | undefined = this.allRecruitmentPosts().find((post: RecruitmentPost) =>
+        post.id === this.competitionApplicationPostId);
+      if (joined !== undefined) {
+        return joined;
+      }
+    }
     const owned: RecruitmentPost | undefined = this.allRecruitmentPosts().find((post: RecruitmentPost) =>
       post.kind === RecruitmentKind.COMPETITION && post.createdBy === accountId);
     if (owned !== undefined) {
@@ -124,11 +136,6 @@ struct Index {
       if (advised !== undefined) {
         return advised;
       }
-    }
-    if (this.competitionApplicationState() === ApplicationState.APPROVED &&
-      this.competitionApplicationApplicantId === accountId) {
-      return this.allRecruitmentPosts().find((post: RecruitmentPost) =>
-        post.id === this.competitionApplicationPostId);
     }
     return undefined;
   }
@@ -168,10 +175,57 @@ struct Index {
     return post === undefined || post.advisorName === undefined ? '' : post.advisorName;
   }
 
+  private currentTaskOwnerName(): string {
+    const post: RecruitmentPost | undefined = this.currentTeamPost();
+    if (post === undefined) {
+      return '';
+    }
+    const accountId: string = accountIdForDemoAccount(this.demoAccount);
+    if (post.createdBy === accountId) {
+      return post.publisher;
+    }
+    if (post.id === this.competitionApplicationPostId &&
+      this.competitionApplicationApplicantId === accountId &&
+      this.competitionApplicationState() === ApplicationState.APPROVED) {
+      const applicantName: string = this.competitionApplicationApplicantName;
+      const advisorName: string = post.advisorName === undefined ? '' : post.advisorName;
+      if (applicantName.length > 0 && applicantName !== post.publisher && applicantName !== advisorName) {
+        return applicantName;
+      }
+      return '';
+    }
+    if (post.advisorId === accountId && this.currentAdvisorAccepted()) {
+      return post.advisorName === undefined ? '' : post.advisorName;
+    }
+    return '';
+  }
+
   private currentTeamConfirmed(): boolean {
     const post: RecruitmentPost | undefined = this.currentTeamPost();
-    return post !== undefined && post.id === this.competitionApplicationPostId &&
-      this.competitionApplicationState() === ApplicationState.APPROVED;
+    return post !== undefined && this.confirmedTeamPostIds.indexOf(post.id) >= 0;
+  }
+
+  private currentTeamReadyToConfirm(): boolean {
+    const post: RecruitmentPost | undefined = this.currentTeamPost();
+    if (post === undefined) {
+      return false;
+    }
+    return canConfirmTeamFormation(
+      post.createdBy === accountIdForDemoAccount(this.demoAccount),
+      post.id,
+      this.competitionApplicationPostId,
+      this.competitionApplicationState()
+    );
+  }
+
+  private confirmCurrentTeam(): void {
+    const post: RecruitmentPost | undefined = this.currentTeamPost();
+    if (post !== undefined && this.currentTeamReadyToConfirm() &&
+      this.confirmedTeamPostIds.indexOf(post.id) < 0) {
+      this.confirmedTeamPostIds = this.confirmedTeamPostIds.concat([post.id]);
+      this.workflowTeamConfirmed = true;
+      this.workflowOwnerAccountId = post.createdBy;
+    }
   }
 
   private currentTeamApplicationState(): ApplicationState {
@@ -197,13 +251,25 @@ struct Index {
   }
 
   private currentCanManageProject(): boolean {
-    return this.currentCanManageTeam() || (this.workflowTeamConfirmed &&
+    return (this.currentTeamConfirmed() && this.currentCanManageTeam()) || (this.workflowTeamConfirmed &&
       this.workflowOwnerAccountId === accountIdForDemoAccount(this.demoAccount));
   }
 
   private currentProjectExists(): boolean {
     const post: RecruitmentPost | undefined = this.currentTeamPost();
-    return post !== undefined && this.projectTaskPlanConfirmed && this.projectTeamPostId === post.id;
+    return post !== undefined && this.currentTeamConfirmed() && this.projectTaskPlanConfirmed &&
+      this.projectTeamPostId === post.id && this.projectTasks.length > 0;
+  }
+
+  private publishCurrentProjectPlan(tasks: ProjectTask[]): void {
+    const post: RecruitmentPost | undefined = this.currentTeamPost();
+    if (post === undefined || !this.currentTeamConfirmed() || !this.currentCanManageTeam() || tasks.length === 0) {
+      return;
+    }
+    this.projectTeamPostId = post.id;
+    this.projectTasks = tasks.slice();
+    this.projectTaskPlanConfirmed = true;
+    this.projectFirstTaskStarted = false;
   }
 
   private acceptCurrentAdvisorInvitation(): void {
@@ -238,9 +304,11 @@ struct Index {
     this.activityApplicationApplicantId = '';
     this.activityApplicationApplicantName = '';
     this.acceptedAdvisorPostIds = [];
+    this.confirmedTeamPostIds = [];
     this.projectTaskPlanConfirmed = false;
     this.projectFirstTaskStarted = false;
     this.projectTeamPostId = '';
+    this.projectTasks = [];
     AppStorage.setOrCreate<boolean>('kxCampusOps.notifications.deadline', true);
     AppStorage.setOrCreate<boolean>('kxCampusOps.notifications.application', true);
     AppStorage.setOrCreate<boolean>('kxCampusOps.notifications.task', true);
@@ -286,8 +354,10 @@ struct Index {
       if (this.pendingOpportunityTitle.length > 0) {
         this.startWorkflow(this.pendingOpportunityTitle);
       } else {
-        this.selectedTab = this.pendingTab;
+        this.selectedTab = this.pendingTab === 6 ? 0 : this.pendingTab;
       }
+    } else if (this.accountRole !== AccountRole.ADMIN && this.selectedTab === 6) {
+      this.selectedTab = 0;
     }
     this.pendingTab = -1;
     this.pendingOpportunityTitle = '';
@@ -302,6 +372,7 @@ struct Index {
 
   private switchAccount(): void {
     this.isLoggedIn = false;
+    this.selectedTab = 0;
     this.pendingTab = -1;
     this.pendingOpportunityTitle = '';
     this.showLogin = true;
@@ -346,8 +417,7 @@ struct Index {
     this.personalPlanCreated = false;
     this.candidateApproved = false;
     this.workflowTeamConfirmed = false;
-    this.workflowTaskPlanConfirmed = false;
-    this.workflowFirstTaskStarted = false;
+    this.workflowOwnerAccountId = '';
     this.selectedTab = 1;
   }
 
@@ -360,8 +430,6 @@ struct Index {
     this.workflowTeamConfirmed = false;
     this.workflowOwnerAccountId = this.accountRole === AccountRole.STUDENT ?
       accountIdForDemoAccount(this.demoAccount) : '';
-    this.workflowTaskPlanConfirmed = false;
-    this.workflowFirstTaskStarted = false;
     this.selectedTab = 1;
   }
 
@@ -421,18 +489,23 @@ struct Index {
       personalPlanCreated: $personalPlanCreated,
       candidateApproved: $candidateApproved,
       teamConfirmed: $workflowTeamConfirmed,
-      taskPlanConfirmed: $workflowTaskPlanConfirmed,
-      firstTaskStarted: $workflowFirstTaskStarted,
+      taskPlanConfirmed: $projectTaskPlanConfirmed,
+      firstTaskStarted: $projectFirstTaskStarted,
       isWide: this.isWide,
       canManageProject: this.currentCanManageProject(),
       managerName: this.currentProfile().displayName,
       leaderName: this.currentTeamOwnerName().length > 0 ? this.currentTeamOwnerName() : this.currentProfile().displayName,
       memberName: this.competitionApplicationApplicantName,
       advisorName: this.currentAdvisorAccepted() ? this.currentAdvisorName() : '',
+      projectTasks: this.projectTasks,
+      currentTaskOwnerName: this.currentTaskOwnerName(),
       accountRole: this.accountRole,
       demoAccount: this.demoAccount,
       onTeamRecruitmentCreated: (post: RecruitmentPost) => {
         this.publishRecruitment(post);
+      },
+      onPlanConfirmed: (tasks: ProjectTask[]) => {
+        this.publishCurrentProjectPlan(tasks);
       }
     })
   }
@@ -444,6 +517,7 @@ struct Index {
       demoAccount: this.demoAccount,
       teamExists: this.currentTeamExists(),
       teamConfirmed: this.currentTeamConfirmed(),
+      teamReadyToConfirm: this.currentTeamReadyToConfirm(),
       isWide: this.isWide,
       teamTitle: this.currentTeamTitle(),
       opportunityTitle: this.currentTeamTitle(),
@@ -471,6 +545,12 @@ struct Index {
       onRejectApplicant: () => {
         this.rejectCompetitionApplication();
       },
+      onConfirmTeam: () => {
+        this.confirmCurrentTeam();
+      },
+      onOpenProject: () => {
+        this.selectedTab = 4;
+      },
       onOpenFeasibility: () => {
         this.workflowStep = WorkflowStep.FEASIBILITY;
         this.selectedTab = 1;
@@ -483,23 +563,20 @@ struct Index {
 
   @Builder
   ProjectContent() {
-    if (this.currentTeamExists() && !this.currentProjectExists()) {
+    if (this.currentTeamConfirmed() && !this.currentProjectExists()) {
       ProjectPlanPage({
         selectedTab: $selectedTab,
         workflowStep: $workflowStep,
         taskPlanConfirmed: $projectTaskPlanConfirmed,
         opportunityTitle: this.currentTeamTitle(),
         isWide: this.isWide,
-        canManageProject: this.currentCanManageProject(),
+        canManageProject: this.currentCanManageTeam(),
         managerName: this.currentProfile().displayName,
         leaderName: this.currentTeamOwnerName(),
         memberName: this.competitionApplicationApplicantName,
         advisorName: this.currentAdvisorAccepted() ? this.currentAdvisorName() : '',
-        onPlanConfirmed: () => {
-          const post: RecruitmentPost | undefined = this.currentTeamPost();
-          if (post !== undefined) {
-            this.projectTeamPostId = post.id;
-          }
+        onPlanConfirmed: (tasks: ProjectTask[]) => {
+          this.publishCurrentProjectPlan(tasks);
         }
       })
     } else {
@@ -511,6 +588,10 @@ struct Index {
         opportunityTitle: this.currentTeamTitle(),
         isWide: this.isWide,
         canManageProject: this.currentCanManageProject(),
+        currentTaskOwnerName: this.currentTaskOwnerName(),
+        hasTeam: this.currentTeamExists(),
+        teamConfirmed: this.currentTeamConfirmed(),
+        tasks: this.projectTasks,
         hasProject: this.currentProjectExists()
       })
     }
@@ -590,8 +671,10 @@ struct Index {
       this.ProjectContent()
     } else if (this.selectedTab === 5) {
       this.ProfileContent()
-    } else {
+    } else if (this.selectedTab === 6 && this.isLoggedIn && this.accountRole === AccountRole.ADMIN) {
       this.AdminContent()
+    } else {
+      this.HomeContent()
     }
   }
 

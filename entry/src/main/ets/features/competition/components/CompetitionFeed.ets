@@ -19,7 +19,7 @@ import {
   COLOR_PRIMARY,
   COLOR_PRIMARY_SOFT,
   COLOR_SURFACE,
-  PAGE_MAX_WIDTH
+  COLOR_TEXT
 } from '../../../shared/Theme';
 
 @Component
@@ -182,13 +182,13 @@ export struct CompetitionFeed {
     Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
       ForEach(['全部', '设计与产品', '开发与测试', '研究与路演'], (filter: string) => {
         Button(filter)
-          .height(34)
+          .height(32)
           .fontSize(12)
-          .fontColor(this.activeFilter === filter ? COLOR_PRIMARY : COLOR_MUTED)
+          .fontWeight(this.activeFilter === filter ? FontWeight.Bold : FontWeight.Medium)
+          .fontColor(this.activeFilter === filter ? COLOR_TEXT : COLOR_MUTED)
           .backgroundColor(this.activeFilter === filter ? COLOR_PRIMARY_SOFT : COLOR_SURFACE)
-          .border({ width: 1, color: this.activeFilter === filter ? COLOR_PRIMARY : COLOR_BORDER })
-          .borderRadius(4)
-          .margin({ right: 8, bottom: 8 })
+          .borderRadius(3)
+          .margin({ right: 6, bottom: 6 })
           .onClick(() => {
             this.activeFilter = filter;
           })
@@ -198,12 +198,32 @@ export struct CompetitionFeed {
   }
 
   @Builder
+  TableHeader() {
+    Row() {
+      Text('机会').layoutWeight(1).fontSize(11).fontColor(COLOR_MUTED).letterSpacing(0.5)
+      Text('需要角色').width(190).fontSize(11).fontColor(COLOR_MUTED).letterSpacing(0.5)
+      Text('发布与截止').width(190).fontSize(11).fontColor(COLOR_MUTED).letterSpacing(0.5)
+      Text('进度与操作').width(210).fontSize(11).fontColor(COLOR_MUTED).letterSpacing(0.5).textAlign(TextAlign.End)
+    }
+    .width('100%')
+    .height(38)
+    .padding({ left: 14, right: 14 })
+    .backgroundColor('#F7F9F8')
+    .border({ width: { top: 1, bottom: 1 }, color: COLOR_BORDER })
+  }
+
+  @Builder
   List() {
     if (this.posts().length === 0) {
       Text('没有匹配的比赛组队信息')
-        .width('100%').padding(28).textAlign(TextAlign.Center).fontSize(14).fontColor(COLOR_MUTED)
+        .width('100%')
+        .padding(32)
+        .textAlign(TextAlign.Center)
+        .fontSize(13)
+        .fontColor(COLOR_MUTED)
+        .border({ width: { top: 1, bottom: 1 }, color: COLOR_BORDER })
     } else {
-      Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.SpaceBetween }) {
+      Column() {
         ForEach(this.posts(), (post: RecruitmentPost) => {
           RecruitmentCard({
             post: post,
@@ -251,22 +271,31 @@ export struct CompetitionFeed {
   }
 
   build() {
-    Column({ space: 12 }) {
+    Column({ space: 0 }) {
       if (this.selectedPostId.length > 0) {
         this.Detail()
       } else {
         Row() {
-          Text('比赛组队').fontSize(17).fontWeight(FontWeight.Bold).fontColor(COLOR_PRIMARY)
+          Column({ space: 3 }) {
+            Text('正在招募')
+              .fontSize(17)
+              .fontWeight(FontWeight.Bold)
+              .fontColor(COLOR_TEXT)
+            Text('按当前缺口比较队伍').fontSize(11).fontColor(COLOR_MUTED)
+          }
+          .alignItems(HorizontalAlign.Start)
           Blank()
           Text(`${this.posts().length} 条`).fontSize(12).fontColor(COLOR_MUTED)
         }
         .width('100%')
+        .padding({ top: 16, bottom: 10 })
         this.FilterBar()
+        if (this.isWide && this.posts().length > 0) {
+          this.TableHeader()
+        }
         this.List()
       }
     }
     .width('100%')
-    .constraintSize({ maxWidth: PAGE_MAX_WIDTH })
-    .padding({ left: this.isWide ? 28 : 18, right: this.isWide ? 28 : 18 })
   }
 }

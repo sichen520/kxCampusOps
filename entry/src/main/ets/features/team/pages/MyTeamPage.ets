@@ -28,6 +28,7 @@ export struct MyTeamPage {
   @Prop demoAccount: DemoAccount = DemoAccount.STUDENT_APPLICANT;
   @Prop teamExists: boolean = false;
   @Prop teamConfirmed: boolean = false;
+  @Prop teamReadyToConfirm: boolean = false;
   @Prop isWide: boolean = false;
   @Prop teamTitle: string = '';
   @Prop opportunityTitle: string = '';
@@ -48,8 +49,10 @@ export struct MyTeamPage {
   onAcceptAdvisor: () => void = () => {};
   onApproveApplicant: () => void = () => {};
   onRejectApplicant: () => void = () => {};
+  onConfirmTeam: () => void = () => {};
   onOpenFeasibility: () => void = () => {};
   onOpenHome: () => void = () => {};
+  onOpenProject: () => void = () => {};
 
   private isCurrentLeader(): boolean {
     return this.teamExists && this.currentAccountId === this.teamOwnerId;
@@ -116,7 +119,7 @@ export struct MyTeamPage {
         '学生发起指导邀请并经你确认后，队伍及指导关系会显示在这里。' :
         this.accountRole === AccountRole.ADMIN ? '管理员只处理平台治理，不拥有学生队伍或活动队伍。' :
         '你可以直接创建比赛组队招募，也可以从首页申请加入其他同学的队伍。')
-        .width('100%').textAlign(TextAlign.Center).fontSize(14).lineHeight(22).fontColor(COLOR_MUTED)
+        .width('100%').fontSize(14).lineHeight(22).fontColor(COLOR_MUTED)
       if (this.accountRole === AccountRole.STUDENT) {
         Row({ space: 10 }) {
           Button('创建比赛队伍')
@@ -137,16 +140,16 @@ export struct MyTeamPage {
       }
     }
     .width('100%')
-    .padding({ top: 42, bottom: 42, left: 28, right: 28 })
+    .padding({ top: 28, bottom: 28, left: 24, right: 24 })
     .backgroundColor(COLOR_SURFACE)
-    .borderRadius(8)
+    .borderRadius(4)
     .border({ width: 1, color: COLOR_BORDER })
-    .alignItems(HorizontalAlign.Center)
+    .alignItems(HorizontalAlign.Start)
   }
 
   @Builder
   TeamOverview() {
-    Column({ space: 20 }) {
+    Column({ space: 0 }) {
       Row() {
         Column({ space: 5 }) {
           Text(this.teamTitle).fontSize(22).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
@@ -161,39 +164,101 @@ export struct MyTeamPage {
         })
       }
       .width('100%')
+      .padding({ left: 18, right: 18, top: 16, bottom: 16 })
+      .backgroundColor(COLOR_SURFACE)
+      .border({ width: 1, color: COLOR_BORDER })
+      .borderRadius({ topLeft: 4, topRight: 4 })
       Row({ space: 10 }) {
         StatusPill({
-          text: this.isCurrentLeader() ? '我的权限：本队队长' :
-            this.canManageTeam ? '我的权限：指导老师' : '我的权限：队员 / 待确认',
+          text: this.isCurrentLeader() ? '本队队长' :
+            this.canManageTeam ? '指导老师' : '队员',
           fillColor: this.canManageTeam ? COLOR_PRIMARY_SOFT : COLOR_BLUE_SOFT,
           textColor: this.canManageTeam ? COLOR_PRIMARY : COLOR_BLUE
         })
         Text(this.isCurrentLeader() ?
-          '你创建了这条组队招募，因此只在这支队伍中拥有审批和分工权限。' :
-          this.canManageTeam ? '你已接受指导邀请，与队长共享成员管理和任务分工权限。' :
-          '你在这支队伍中没有管理权限，队长由创建关系决定，指导老师需先接受邀请。')
-          .layoutWeight(1).fontSize(13).lineHeight(20).fontColor(COLOR_TEXT)
+          '负责成员审批和团队确认' :
+          this.canManageTeam ? '可协助成员审批和项目分工' : '查看成员关系和本人任务')
+          .layoutWeight(1).fontSize(12).fontColor(COLOR_MUTED)
       }
       .width('100%')
-      .padding(14)
-      .backgroundColor(this.isCurrentLeader() ? COLOR_PRIMARY_SOFT : COLOR_BLUE_SOFT)
-      .borderRadius(6)
-      if (this.hasPendingApplication()) {
-        this.PendingApplicationPanel()
-      }
+      .padding({ left: 14, right: 14, top: 9, bottom: 9 })
+      .backgroundColor(COLOR_SURFACE)
+      .border({ width: 1, color: COLOR_BORDER })
       if (this.isWide) {
-        Row({ space: 18 }) {
+        Row({ space: 14 }) {
+          Column({ space: 12 }) {
+            if (this.hasPendingApplication()) {
+              this.PendingApplicationPanel()
+            }
+            this.MemberPanel()
+          }
+          .layoutWeight(2)
+          Column({ space: 12 }) {
+            if (this.teamConfirmed || this.applicationState === ApplicationState.APPROVED) {
+              this.TeamFormationPanel()
+            }
+            this.TeacherPanel()
+          }
+          .layoutWeight(1)
+        }
+        .width('100%')
+        .padding({ top: 14 })
+        .alignItems(VerticalAlign.Top)
+      } else {
+        Column({ space: 12 }) {
+          if (this.hasPendingApplication()) {
+            this.PendingApplicationPanel()
+          }
+          if (this.teamConfirmed || this.applicationState === ApplicationState.APPROVED) {
+            this.TeamFormationPanel()
+          }
           this.MemberPanel()
           this.TeacherPanel()
         }
         .width('100%')
-        .alignItems(VerticalAlign.Top)
-      } else {
-        this.MemberPanel()
-        this.TeacherPanel()
+        .padding({ top: 12 })
       }
     }
     .width('100%')
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  TeamFormationPanel() {
+    Column({ space: 12 }) {
+      Row({ space: 10 }) {
+        StatusPill({
+          text: this.teamConfirmed ? '团队已正式成立' : '等待正式确认',
+          fillColor: this.teamConfirmed ? COLOR_PRIMARY_SOFT : COLOR_AMBER_SOFT,
+          textColor: this.teamConfirmed ? COLOR_PRIMARY : COLOR_AMBER
+        })
+        Text(this.teamConfirmed ?
+          '成员关系已经确认，现在可以创建项目并发布分工。' :
+          this.teamReadyToConfirm ? '申请已经批准，请确认团队成立后再创建项目。' :
+            '申请已经批准，正在等待队伍创建者正式确认团队。')
+          .layoutWeight(1)
+          .fontSize(13)
+          .lineHeight(20)
+          .fontColor(COLOR_TEXT)
+      }
+      .width('100%')
+      if (this.teamConfirmed) {
+        Button('进入 CampusOps 项目')
+          .width('100%').height(44).fontSize(14).fontColor('#FFFFFF')
+          .backgroundColor(COLOR_PRIMARY).borderRadius(5)
+          .onClick(() => { this.onOpenProject(); })
+      } else if (this.teamReadyToConfirm) {
+        Button('确认团队正式成立')
+          .width('100%').height(44).fontSize(14).fontColor('#FFFFFF')
+          .backgroundColor(COLOR_PRIMARY).borderRadius(5)
+          .onClick(() => { this.onConfirmTeam(); })
+      }
+    }
+    .width('100%')
+    .padding(16)
+    .backgroundColor(COLOR_SURFACE)
+    .border({ width: 1, color: this.teamConfirmed ? COLOR_PRIMARY : COLOR_AMBER })
+    .borderRadius(4)
     .alignItems(HorizontalAlign.Start)
   }
 
@@ -242,7 +307,7 @@ export struct MyTeamPage {
     .padding(18)
     .backgroundColor(COLOR_SURFACE)
     .border({ width: 1, color: COLOR_AMBER })
-    .borderRadius(8)
+    .borderRadius(4)
     .alignItems(HorizontalAlign.Start)
   }
 
@@ -259,9 +324,9 @@ export struct MyTeamPage {
     }
     .layoutWeight(2)
     .width(this.isWide ? undefined : '100%')
-    .padding(18)
+    .padding(16)
     .backgroundColor(COLOR_SURFACE)
-    .borderRadius(8)
+    .borderRadius(4)
     .border({ width: 1, color: COLOR_BORDER })
     .alignItems(HorizontalAlign.Start)
   }
@@ -294,9 +359,9 @@ export struct MyTeamPage {
     }
     .layoutWeight(1)
     .width(this.isWide ? undefined : '100%')
-    .padding(18)
+    .padding(16)
     .backgroundColor(COLOR_SURFACE)
-    .borderRadius(8)
+    .borderRadius(4)
     .border({ width: 1, color: COLOR_BORDER })
     .alignItems(HorizontalAlign.Start)
   }
@@ -321,8 +386,8 @@ export struct MyTeamPage {
             PageTitle({
               eyebrow: '队伍',
               title: this.teamExists ? '我的队伍' : '队伍与指导关系',
-              description: this.teamExists ? '队长由具体队伍的创建或移交关系决定，不是账号的固定身份。' :
-                '创建、加入和指导关系都需要明确的双向确认。'
+              description: this.teamExists ? '成员、申请和指导关系集中管理。' :
+                '创建队伍或从首页申请加入。'
             })
             if (this.teamExists) {
               this.TeamOverview()
@@ -332,7 +397,7 @@ export struct MyTeamPage {
           }
           .width('100%')
           .constraintSize({ maxWidth: PAGE_MAX_WIDTH })
-          .padding({ left: this.isWide ? 32 : 18, right: this.isWide ? 32 : 18, top: 26, bottom: 32 })
+          .padding({ left: this.isWide ? 24 : 16, right: this.isWide ? 24 : 16, top: 20, bottom: 28 })
         }
         .width('100%')
         .justifyContent(FlexAlign.Center)

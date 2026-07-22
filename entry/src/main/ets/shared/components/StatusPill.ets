@@ -9,8 +9,10 @@ export struct StatusPill {
       .fontSize(11)
       .fontWeight(FontWeight.Medium)
       .fontColor(this.textColor)
+      .letterSpacing(0.3)
       .backgroundColor(this.fillColor)
-      .borderRadius(3)
-      .padding({ left: 7, right: 7, top: 4, bottom: 4 })
+      .border({ width: { left: 2 }, color: this.textColor })
+      .borderRadius(2)
+      .padding({ left: 7, right: 8, top: 3, bottom: 3 })
   }
 }

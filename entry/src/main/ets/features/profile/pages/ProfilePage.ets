@@ -126,16 +126,16 @@ export struct ProfilePage {
   @Builder
   IdentityCard() {
     Row({ space: 14 }) {
-      Text(this.accountRole === AccountRole.STUDENT ? '学生' : this.accountRole === AccountRole.TEACHER ? '老师' : '管')
+      Text(this.accountName().slice(0, 1))
         .width(54)
         .height(54)
         .textAlign(TextAlign.Center)
-        .fontSize(15)
+        .fontSize(20)
         .fontWeight(FontWeight.Bold)
         .fontColor('#FFFFFF')
         .backgroundColor(COLOR_PRIMARY)
-        .borderRadius(27)
-        .padding({ top: 17 })
+        .borderRadius(4)
+        .padding({ top: 14 })
       Column({ space: 5 }) {
         Row({ space: 8 }) {
           Text(this.accountName())
@@ -160,9 +160,9 @@ export struct ProfilePage {
         })
     }
     .width('100%')
-    .padding(18)
+    .padding(16)
     .backgroundColor(COLOR_SURFACE)
-    .borderRadius(6)
+    .borderRadius(4)
     .border({ width: 1, color: COLOR_BORDER })
   }
 
@@ -229,10 +229,7 @@ export struct ProfilePage {
       Text(label).fontSize(12).fontColor(COLOR_MUTED)
     }
     .layoutWeight(1)
-    .padding(13)
-    .backgroundColor(COLOR_SURFACE)
-    .borderRadius(5)
-    .border({ width: 1, color: COLOR_BORDER })
+    .padding({ left: 16, right: 16, top: 13, bottom: 13 })
     .alignItems(HorizontalAlign.Start)
   }
 
@@ -260,8 +257,8 @@ export struct ProfilePage {
   @Builder
   AbilityPassport() {
     Column({ space: 12 }) {
-      Text('能力护照').fontSize(17).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
-      Text('只在你授权后向招募负责人展示证据。').fontSize(12).fontColor(COLOR_MUTED)
+      Text('能力档案').fontSize(17).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+      Text('授权后可向招募负责人展示。').fontSize(12).fontColor(COLOR_MUTED)
       Row({ space: 8 }) {
         StatusPill({ text: 'ArkTS', fillColor: COLOR_PRIMARY_SOFT, textColor: COLOR_PRIMARY })
         StatusPill({ text: '应用开发', fillColor: COLOR_BLUE_SOFT, textColor: COLOR_BLUE })
@@ -276,8 +273,8 @@ export struct ProfilePage {
     .width('100%')
     .padding(18)
     .backgroundColor(COLOR_SURFACE)
-    .borderRadius(6)
-    .border({ width: 1, color: COLOR_BORDER })
+    .borderRadius(this.isWide ? 0 : 4)
+    .border({ width: this.isWide ? 0 : 1, color: COLOR_BORDER })
     .alignItems(HorizontalAlign.Start)
   }
 
@@ -347,7 +344,7 @@ export struct ProfilePage {
   @Builder
   AccountSettings() {
     Column() {
-      Text('账号与设置').width('100%').fontSize(17).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+      Text('账号入口').width('100%').fontSize(17).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
       this.MenuItem('通知设置', '截止、申请、任务和活动通知', '', () => {
         this.activePanel = 'notifications';
       })
@@ -392,8 +389,8 @@ export struct ProfilePage {
     .width('100%')
     .padding(18)
     .backgroundColor(COLOR_SURFACE)
-    .borderRadius(6)
-    .border({ width: 1, color: COLOR_BORDER })
+    .borderRadius(this.isWide ? 0 : 4)
+    .border({ width: this.isWide ? 0 : 1, color: COLOR_BORDER })
     .alignItems(HorizontalAlign.Start)
   }
 
@@ -438,12 +435,9 @@ export struct ProfilePage {
           } else {
             PageTitle({
               eyebrow: '个人中心',
-              title: this.accountRole === AccountRole.STUDENT ? '我的账号与校园履约记录' :
-                this.accountRole === AccountRole.ADMIN ? '我的平台管理记录' : '我的指导工作与活动记录',
-              description: this.accountRole === AccountRole.STUDENT ?
-                '管理身份资料、能力证据、申请、队伍、项目、活动记录和隐私设置。' :
-                this.accountRole === AccountRole.ADMIN ? '管理内容审核、举报处理、身份认证和平台设置。' :
-                '管理身份资料、活动发布、报名审批、指导项目和隐私设置。'
+              title: this.accountRole === AccountRole.STUDENT ? '我的工作状态' :
+                this.accountRole === AccountRole.ADMIN ? '我的管理工作' : '我的指导工作',
+              description: '身份资料、当前事项和账号设置。'
             })
             this.IdentityCard()
             if (this.isEditing) {
@@ -461,29 +455,40 @@ export struct ProfilePage {
                   this.accountRole === AccountRole.STUDENT ? '知识贡献' : this.accountRole === AccountRole.ADMIN ? '资源分类' : '活动人次', COLOR_PRIMARY)
               }
               .width('100%')
+              .backgroundColor(COLOR_SURFACE)
+              .border({ width: 1, color: COLOR_BORDER })
+              .borderRadius(4)
             } else {
-              Row({ space: 10 }) {
-                this.Stat(this.pendingCount().toString(), '待审批申请', COLOR_AMBER)
-                this.Stat(this.teamExists ? '1' : '0', '参与队伍', COLOR_PRIMARY)
+              Column({ space: 0 }) {
+                Row() {
+                  this.Stat(this.pendingCount().toString(), '待审批申请', COLOR_AMBER)
+                  this.Stat(this.teamExists ? '1' : '0', '参与队伍', COLOR_PRIMARY)
+                }
+                .width('100%')
+                Divider().color(COLOR_BORDER)
+                Row() {
+                  this.Stat(this.projectExists ? '3' : '0', '个人任务', COLOR_BLUE)
+                  this.Stat(this.knowledgeContributionCount.toString(), '知识贡献', COLOR_PRIMARY)
+                }
+                .width('100%')
               }
               .width('100%')
-              Row({ space: 10 }) {
-                this.Stat(this.projectExists ? '3' : '0', '个人任务', COLOR_BLUE)
-                this.Stat(this.knowledgeContributionCount.toString(), '知识贡献', COLOR_PRIMARY)
-              }
-              .width('100%')
+              .backgroundColor(COLOR_SURFACE)
+              .border({ width: 1, color: COLOR_BORDER })
+              .borderRadius(4)
             }
             if (this.isWide) {
               Row({ space: 16 }) {
-                Column({ space: 16 }) {
-                  this.PersonalMenus()
+                Column() { this.PersonalMenus() }.layoutWeight(2)
+                Column({ space: 0 }) {
                   this.AbilityPassport()
-                }
-                .layoutWeight(2)
-                Column() {
+                  Divider().color(COLOR_BORDER)
                   this.AccountSettings()
                 }
                 .layoutWeight(1)
+                .backgroundColor(COLOR_SURFACE)
+                .border({ width: 1, color: COLOR_BORDER })
+                .borderRadius(4)
               }
               .width('100%')
               .alignItems(VerticalAlign.Top)

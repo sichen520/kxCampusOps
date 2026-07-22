@@ -61,7 +61,7 @@
 | DevEco JBR | 可用 | JBR 21 |
 | HarmonyOS 工程 | 可用 | `E:\UN\kxCampusOps` |
 | HAP 构建 | 已通过 | `entry\build\default\outputs\default\entry-default-unsigned.hap` |
-| 本地单元测试 | 已通过 | 5/5 业务规则测试通过；行/函数覆盖率 35.71%，分支覆盖率 66.67% |
+| 本地单元测试 | 已通过 | 11/11 领域规则测试通过；整体行覆盖率 56.47%，函数覆盖率 58.33%，分支覆盖率 61.54% |
 | HAP 签名 | 未完成 | 需要在 DevEco Studio 中配置自动签名/证书 |
 | Git | 已初始化 | 尚未创建首次提交 |
 | Docker | 已安装、守护进程未启动 | 后端开发前启动 Docker Desktop |

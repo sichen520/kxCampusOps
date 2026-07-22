@@ -6,6 +6,7 @@ import {
   approveApplicationState,
   canApplyForRecruitment,
   canConfirmTeam,
+  canConfirmTeamFormation,
   canCreateProject,
   canPublishRecruitment,
   canPublishTaskPlan,
@@ -62,6 +63,13 @@ export default function localUnitTest() {
     it('requiresConfirmedTeamBeforeProjectCreation', 0, () => {
       expect(canCreateProject(false)).assertEqual(false);
       expect(canCreateProject(true)).assertEqual(true);
+    });
+
+    it('requiresLeaderApprovalBeforeFormalTeamConfirmation', 0, () => {
+      expect(canConfirmTeamFormation(true, 'team-1', 'team-1', ApplicationState.APPROVED)).assertEqual(true);
+      expect(canConfirmTeamFormation(false, 'team-1', 'team-1', ApplicationState.APPROVED)).assertEqual(false);
+      expect(canConfirmTeamFormation(true, 'team-1', 'team-2', ApplicationState.APPROVED)).assertEqual(false);
+      expect(canConfirmTeamFormation(true, 'team-1', 'team-1', ApplicationState.PENDING)).assertEqual(false);
     });
 
     it('requiresOwnerConfirmationBeforePublishingTasks', 0, () => {

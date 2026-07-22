@@ -21,67 +21,175 @@ export struct OpportunityImportPage {
   @Prop isWide: boolean = false;
 
   @Builder
-  ImportControls() {
-    Column({ space: 12 }) {
-      Text('选择采集方式')
-        .fontSize(16)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(COLOR_TEXT)
-      Row({ space: 10 }) {
-        Button('扫描海报')
-          .layoutWeight(1)
-          .height(44)
-          .fontSize(14)
-          .fontColor(COLOR_PRIMARY)
-          .backgroundColor(COLOR_PRIMARY_SOFT)
-          .borderRadius(5)
-          .onClick(() => {
-            this.sourceSelected = true;
-          })
-        Button('导入演示资料')
-          .layoutWeight(1)
-          .height(44)
-          .fontSize(14)
-          .fontColor(COLOR_BLUE)
-          .backgroundColor(COLOR_BLUE_SOFT)
-          .borderRadius(5)
-          .onClick(() => {
-            this.sourceSelected = true;
-          })
+  SourceRow(index: string, title: string, detail: string, action: string, primary: boolean) {
+    Row({ space: 14 }) {
+      Text(index)
+        .width(28)
+        .fontSize(11)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(primary ? COLOR_PRIMARY : COLOR_BLUE)
+      Column({ space: 3 }) {
+        Text(title).fontSize(15).fontWeight(FontWeight.Medium).fontColor(COLOR_TEXT)
+        Text(detail).fontSize(12).fontColor(COLOR_MUTED)
       }
-      .width('100%')
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+      Button(action)
+        .height(34)
+        .fontSize(12)
+        .fontColor(primary ? COLOR_PRIMARY : COLOR_BLUE)
+        .backgroundColor(primary ? COLOR_PRIMARY_SOFT : COLOR_BLUE_SOFT)
+        .borderRadius(4)
+        .onClick(() => {
+          this.sourceSelected = true;
+        })
     }
     .width('100%')
-    .padding(18)
+    .padding({ top: 15, bottom: 15 })
+  }
+
+  @Builder
+  SourcePanel() {
+    Column() {
+      Row() {
+        Column({ space: 3 }) {
+          Text('材料来源').fontSize(16).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+          Text('选择一种来源建立原文证据。').fontSize(12).fontColor(COLOR_MUTED)
+        }
+        .alignItems(HorizontalAlign.Start)
+        Blank()
+        StatusPill({
+          text: this.sourceSelected ? '已选择' : '待选择',
+          fillColor: this.sourceSelected ? COLOR_PRIMARY_SOFT : COLOR_BLUE_SOFT,
+          textColor: this.sourceSelected ? COLOR_PRIMARY : COLOR_BLUE
+        })
+      }
+      .width('100%')
+      .padding({ top: 14, bottom: 14 })
+      .border({ width: { bottom: 1 }, color: COLOR_BORDER })
+
+      this.SourceRow('01', '扫描海报', '调用相机采集比赛海报或通知截图', '扫描', true)
+      Divider().color(COLOR_BORDER)
+      this.SourceRow('02', '导入演示资料', '本地 PDF · 12 页 · 已包含竞赛规程', '导入', false)
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16 })
     .backgroundColor(COLOR_SURFACE)
-    .borderRadius(6)
-    .border({ width: 1, color: COLOR_BORDER })
+    .border({ width: { top: 1, bottom: 1 }, color: COLOR_BORDER })
     .alignItems(HorizontalAlign.Start)
   }
 
   @Builder
-  SourcePreview() {
-    Column({ space: 10 }) {
-      Row() {
-        StatusPill({ text: '已导入', fillColor: COLOR_PRIMARY_SOFT, textColor: COLOR_PRIMARY })
-        Blank()
-        Text('PDF · 12 页').fontSize(12).fontColor(COLOR_MUTED)
-      }
-      .width('100%')
-      Text(this.opportunityTitle.length > 0 ? this.opportunityTitle : '2026 鸿蒙高校创新赛竞赛规程.pdf')
-        .fontSize(16)
-        .fontWeight(FontWeight.Medium)
-        .fontColor(COLOR_TEXT)
-      Text('原始文件、采集时间和内容指纹会随解析结果一起保存。')
+  EvidenceRow(label: string, value: string, accent: boolean = false) {
+    Row({ space: 14 }) {
+      Text(label).width(this.isWide ? 82 : 72).fontSize(12).fontColor(COLOR_MUTED)
+      Text(value)
+        .layoutWeight(1)
         .fontSize(13)
-        .fontColor(COLOR_MUTED)
+        .fontColor(accent ? COLOR_BLUE : COLOR_TEXT)
+        .maxLines(2)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
     }
     .width('100%')
-    .padding(16)
+    .padding({ top: 10, bottom: 10 })
+    .border({ width: { bottom: 1 }, color: COLOR_BORDER })
+  }
+
+  @Builder
+  SourceEvidence() {
+    Column() {
+      Row() {
+        Column({ space: 3 }) {
+          Text('原文记录').fontSize(16).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+          Text('解析前先固定文件与采集信息。').fontSize(12).fontColor(COLOR_MUTED)
+        }
+        .alignItems(HorizontalAlign.Start)
+        Blank()
+        StatusPill({ text: 'PDF · 12 页', fillColor: COLOR_PRIMARY_SOFT, textColor: COLOR_PRIMARY })
+      }
+      .width('100%')
+      .padding({ top: 14, bottom: 14 })
+      .border({ width: { bottom: 1 }, color: COLOR_BORDER })
+
+      Column({ space: 7 }) {
+        Text('已导入材料').fontSize(11).fontColor(COLOR_BLUE)
+        Text(this.opportunityTitle.length > 0 ? this.opportunityTitle : '2026 鸿蒙高校创新赛竞赛规程.pdf')
+          .fontSize(this.isWide ? 19 : 17)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(COLOR_TEXT)
+        Text('竞赛规程与报名要求').fontSize(12).fontColor(COLOR_MUTED)
+      }
+      .width('100%')
+      .padding({ top: 16, bottom: 12 })
+      .alignItems(HorizontalAlign.Start)
+
+      this.EvidenceRow('文件名', 'harmonyos_competition_rules_2026.pdf', true)
+      this.EvidenceRow('采集方式', '本地文件导入')
+      this.EvidenceRow('内容指纹', 'SHA-256 · 7C9A…42E1')
+      this.EvidenceRow('处理状态', '原文已固定，等待解析')
+    }
+    .width('100%')
+    .padding({ left: 16, right: 16 })
     .backgroundColor(COLOR_SURFACE)
-    .borderRadius(6)
-    .border({ width: 1, color: COLOR_BORDER })
+    .border({ width: { top: 1, bottom: 1 }, color: COLOR_BORDER })
     .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  EmptyEvidence() {
+    Column({ space: 8 }) {
+      Text('尚未建立原文记录').fontSize(16).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+      Text('选择左侧来源后，这里显示文件、页数和内容指纹。')
+        .fontSize(13).lineHeight(20).fontColor(COLOR_MUTED)
+    }
+    .width('100%')
+    .constraintSize({ minHeight: 190 })
+    .padding(18)
+    .justifyContent(FlexAlign.Center)
+    .alignItems(HorizontalAlign.Start)
+    .backgroundColor(COLOR_SURFACE)
+    .border({ width: { top: 1, bottom: 1 }, color: COLOR_BORDER })
+  }
+
+  @Builder
+  ActionBar() {
+    if (this.isWide) {
+      Row({ space: 16 }) {
+        Column({ space: 3 }) {
+          Text(this.sourceSelected ? '材料已就绪' : '等待材料来源')
+            .fontSize(13).fontWeight(FontWeight.Medium).fontColor(COLOR_TEXT)
+          Text('下一步会提取字段，并保留每项原文位置。').fontSize(12).fontColor(COLOR_MUTED)
+        }
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+        Button('解析材料')
+          .width(184)
+          .height(44)
+          .fontSize(14)
+          .fontColor('#FFFFFF')
+          .backgroundColor(this.sourceSelected ? COLOR_PRIMARY : '#AAB2AD')
+          .borderRadius(4)
+          .enabled(this.sourceSelected)
+          .onClick(() => {
+            this.workflowStep = WorkflowStep.REVIEW;
+          })
+      }
+      .width('100%')
+      .padding({ top: 16, bottom: 4 })
+      .border({ width: { top: 1 }, color: COLOR_BORDER })
+    } else {
+      Button('解析材料')
+        .width('100%')
+        .height(48)
+        .fontSize(15)
+        .fontColor('#FFFFFF')
+        .backgroundColor(this.sourceSelected ? COLOR_PRIMARY : '#AAB2AD')
+        .borderRadius(4)
+        .enabled(this.sourceSelected)
+        .onClick(() => {
+          this.workflowStep = WorkflowStep.REVIEW;
+        })
+    }
   }
 
   build() {
@@ -91,25 +199,18 @@ export struct OpportunityImportPage {
           WorkflowHeader({
             step: this.workflowStep,
             title: '导入机会材料',
-            description: '支持海报、截图、PDF、链接和手动录入。当前先用本地演示资料验证完整流程。'
+            description: '选择来源并固定原文，解析结果将逐项关联证据。',
+            isWide: this.isWide
           })
+
           if (this.isWide) {
-            Row({ space: 16 }) {
-              Column() { this.ImportControls() }.layoutWeight(1)
+            Row({ space: 24 }) {
+              Column() { this.SourcePanel() }.width('38%')
               Column() {
                 if (this.sourceSelected) {
-                  this.SourcePreview()
+                  this.SourceEvidence()
                 } else {
-                  Column({ space: 8 }) {
-                    Text('等待导入资料').fontSize(17).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
-                    Text('PC 端可以从文件系统选择 PDF 或图片。').fontSize(13).fontColor(COLOR_MUTED)
-                  }
-                  .width('100%')
-                  .padding(24)
-                  .backgroundColor(COLOR_SURFACE)
-                  .borderRadius(6)
-                  .border({ width: 1, color: COLOR_BORDER })
-                  .alignItems(HorizontalAlign.Start)
+                  this.EmptyEvidence()
                 }
               }
               .layoutWeight(1)
@@ -117,28 +218,15 @@ export struct OpportunityImportPage {
             .width('100%')
             .alignItems(VerticalAlign.Top)
           } else {
-            this.ImportControls()
+            this.SourcePanel()
             if (this.sourceSelected) {
-              this.SourcePreview()
+              this.SourceEvidence()
+            } else {
+              this.EmptyEvidence()
             }
           }
-          Button('解析材料')
-            .width('100%')
-            .height(48)
-            .fontSize(15)
-            .fontWeight(FontWeight.Medium)
-            .fontColor('#FFFFFF')
-            .backgroundColor(this.sourceSelected ? COLOR_PRIMARY : '#AAB2AD')
-            .borderRadius(5)
-            .enabled(this.sourceSelected)
-            .onClick(() => {
-              this.workflowStep = WorkflowStep.REVIEW;
-            })
-          Text('解析结果会保留原始材料，发现不准确时可以回到人工核对。')
-            .width('100%')
-            .textAlign(TextAlign.Center)
-            .fontSize(12)
-            .fontColor(COLOR_MUTED)
+
+          this.ActionBar()
         }
         .width('100%')
         .constraintSize({ maxWidth: PAGE_MAX_WIDTH })

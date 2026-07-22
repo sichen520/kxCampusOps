@@ -14,13 +14,14 @@ import { DiscussionFeed } from '../components/DiscussionFeed';
 import { KnowledgeComposer } from '../components/KnowledgeComposer';
 import { ResourceCard } from '../components/ResourceCard';
 import { ResourceDetail } from '../components/ResourceDetail';
-import { PageTitle } from '../../../shared/components/PageTitle';
 import {
+  COLOR_BLUE,
   COLOR_BORDER,
   COLOR_MUTED,
   COLOR_PRIMARY,
   COLOR_PRIMARY_SOFT,
   COLOR_SURFACE,
+  COLOR_SURFACE_ALT,
   COLOR_TEXT,
   PAGE_MAX_WIDTH
 } from '../../../shared/Theme';
@@ -45,9 +46,13 @@ export struct KnowledgePage {
   onResourcePublished: (resource: KnowledgeResource) => void = (_resource: KnowledgeResource) => {};
   onDiscussionPublished: (post: DiscussionPost) => void = (_post: DiscussionPost) => {};
 
+  private allResources(): KnowledgeResource[] {
+    return KNOWLEDGE_RESOURCES.concat(this.extraResources);
+  }
+
   private resources(): KnowledgeResource[] {
     const keyword: string = this.query.trim();
-    return KNOWLEDGE_RESOURCES.concat(this.extraResources).filter((resource: KnowledgeResource) => {
+    return this.allResources().filter((resource: KnowledgeResource) => {
       const categoryMatched: boolean = this.selectedCategory === '全部主题' ||
         (this.selectedCategory === '其他' ? RESOURCE_CATEGORIES.indexOf(resource.category) < 0 || resource.category === '其他' :
           resource.category === this.selectedCategory);
@@ -60,8 +65,24 @@ export struct KnowledgePage {
     });
   }
 
-  private selectedResource(): KnowledgeResource | undefined {
-    return this.resources().find((resource: KnowledgeResource) => resource.id === this.selectedResourceId);
+  private categoryCount(category: string): number {
+    if (category === '全部主题') {
+      return this.allResources().length;
+    }
+    return this.allResources().filter((resource: KnowledgeResource) => {
+      return category === '其他' ? RESOURCE_CATEGORIES.indexOf(resource.category) < 0 || resource.category === '其他' :
+        resource.category === category;
+    }).length;
+  }
+
+  private typeCount(type: string): number {
+    if (type === '全部类型') {
+      return this.allResources().length;
+    }
+    return this.allResources().filter((resource: KnowledgeResource) => {
+      return type === '其他' ? RESOURCE_TYPES.indexOf(resource.resourceType) < 0 || resource.resourceType === '其他' :
+        resource.resourceType === type;
+    }).length;
   }
 
   private resourceComments(resourceId: string): ResourceComment[] {
@@ -80,52 +101,199 @@ export struct KnowledgePage {
     }
   }
 
-  @Builder
-  ModeBar() {
-    Row({ space: 8 }) {
-      Button('资源库')
-        .layoutWeight(1).height(42).fontSize(14)
-        .fontColor(this.activeMode === 0 ? COLOR_PRIMARY : COLOR_MUTED)
-        .backgroundColor(this.activeMode === 0 ? COLOR_PRIMARY_SOFT : COLOR_SURFACE)
-        .borderRadius(4).onClick(() => { this.activeMode = 0; })
-      Button('技术讨论')
-        .layoutWeight(1).height(42).fontSize(14)
-        .fontColor(this.activeMode === 1 ? COLOR_PRIMARY : COLOR_MUTED)
-        .backgroundColor(this.activeMode === 1 ? COLOR_PRIMARY_SOFT : COLOR_SURFACE)
-        .borderRadius(4).onClick(() => { this.activeMode = 1; })
+  private openComposer(): void {
+    if (!this.isLoggedIn) {
+      this.onRequireLogin();
+    } else {
+      this.showComposer = true;
     }
-    .width('100%')
-    .padding(4)
-    .backgroundColor('#E9EDE9')
-    .borderRadius(5)
   }
 
   @Builder
-  ResourceFilters() {
-    Column({ space: 7 }) {
-      Text('主题').fontSize(12).fontWeight(FontWeight.Medium).fontColor(COLOR_MUTED)
+  ModeBar() {
+    Row({ space: 28 }) {
+      Button('资源库')
+        .height(42)
+        .padding({ left: 8, right: 8 })
+        .fontSize(14)
+        .fontWeight(this.activeMode === 0 ? FontWeight.Bold : FontWeight.Medium)
+        .fontColor(this.activeMode === 0 ? COLOR_PRIMARY : COLOR_MUTED)
+        .backgroundColor(Color.Transparent)
+        .border({ width: { bottom: this.activeMode === 0 ? 2 : 0 }, color: COLOR_PRIMARY })
+        .borderRadius(0)
+        .onClick(() => { this.activeMode = 0; })
+      Button('技术讨论')
+        .height(42)
+        .padding({ left: 8, right: 8 })
+        .fontSize(14)
+        .fontWeight(this.activeMode === 1 ? FontWeight.Bold : FontWeight.Medium)
+        .fontColor(this.activeMode === 1 ? COLOR_PRIMARY : COLOR_MUTED)
+        .backgroundColor(Color.Transparent)
+        .border({ width: { bottom: this.activeMode === 1 ? 2 : 0 }, color: COLOR_PRIMARY })
+        .borderRadius(0)
+        .onClick(() => { this.activeMode = 1; })
+    }
+    .width('100%')
+    .border({ width: { bottom: 1 }, color: COLOR_BORDER })
+  }
+
+  @Builder
+  SearchAndAction() {
+    if (this.isWide) {
+      Row({ space: 10 }) {
+        TextInput({
+          placeholder: this.activeMode === 0 ? '搜索标题、作者、课程或关键词' : '搜索主题、内容或作者',
+          text: this.query
+        })
+          .width(360)
+          .height(42)
+          .fontSize(13)
+          .backgroundColor(COLOR_SURFACE)
+          .border({ width: 1, color: COLOR_BORDER })
+          .borderRadius(3)
+          .onChange((value: string) => { this.query = value; })
+        Button(this.activeMode === 0 ? '分享资源' : '发布讨论')
+          .width(106)
+          .height(42)
+          .fontSize(13)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#FFFFFF')
+          .backgroundColor(COLOR_PRIMARY)
+          .borderRadius(3)
+          .onClick(() => { this.openComposer(); })
+      }
+    } else {
+      Column({ space: 10 }) {
+        TextInput({
+          placeholder: this.activeMode === 0 ? '搜索标题、作者、课程或关键词' : '搜索主题、内容或作者',
+          text: this.query
+        })
+          .width('100%')
+          .height(42)
+          .fontSize(13)
+          .backgroundColor(COLOR_SURFACE)
+          .border({ width: 1, color: COLOR_BORDER })
+          .borderRadius(3)
+          .onChange((value: string) => { this.query = value; })
+        Button(this.activeMode === 0 ? '分享资源' : '发布讨论')
+          .width('100%')
+          .height(42)
+          .fontSize(13)
+          .fontWeight(FontWeight.Medium)
+          .fontColor('#FFFFFF')
+          .backgroundColor(COLOR_PRIMARY)
+          .borderRadius(3)
+          .onClick(() => { this.openComposer(); })
+      }
+      .width('100%')
+    }
+  }
+
+  @Builder
+  PageHeader() {
+    if (this.isWide) {
+      Row() {
+        Column({ space: 3 }) {
+          Text('资源库与技术讨论').fontSize(22).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+          Text('课程资料、可复用成果与校园实践经验').fontSize(12).fontColor(COLOR_MUTED)
+        }
+        .alignItems(HorizontalAlign.Start)
+        Blank()
+        this.SearchAndAction()
+      }
+      .width('100%')
+      .padding({ top: 2, bottom: 6 })
+    } else {
+      Column({ space: 14 }) {
+        Column({ space: 3 }) {
+          Text('知享').fontSize(22).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+          Text('查找资料，继续讨论').fontSize(12).fontColor(COLOR_MUTED)
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Start)
+        this.SearchAndAction()
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+    }
+  }
+
+  @Builder
+  DesktopFilterRail() {
+    Column({ space: 0 }) {
+      Text('主题').fontSize(14).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+        .width('100%').padding({ bottom: 9 })
+      ForEach(['全部主题'].concat(RESOURCE_CATEGORIES), (category: string) => {
+        Row({ space: 9 }) {
+          Text(this.selectedCategory === category ? '■' : '□')
+            .width(15)
+            .fontSize(13)
+            .fontColor(this.selectedCategory === category ? COLOR_PRIMARY : COLOR_MUTED)
+          Text(category).layoutWeight(1).fontSize(12).fontColor(this.selectedCategory === category ? COLOR_TEXT : COLOR_MUTED)
+          Text(this.categoryCount(category).toString()).fontSize(11).fontColor(COLOR_MUTED)
+        }
+        .width('100%')
+        .height(34)
+        .padding({ left: 7, right: 7 })
+        .backgroundColor(this.selectedCategory === category ? COLOR_PRIMARY_SOFT : Color.Transparent)
+        .borderRadius(2)
+        .onClick(() => { this.selectedCategory = category; })
+      }, (category: string) => category)
+
+      Divider().color(COLOR_BORDER).margin({ top: 14, bottom: 14 })
+      Text('资料类型').fontSize(14).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+        .width('100%').padding({ bottom: 9 })
+      ForEach(['全部类型'].concat(RESOURCE_TYPES), (type: string) => {
+        Row({ space: 9 }) {
+          Text(this.selectedType === type ? '■' : '□')
+            .width(15)
+            .fontSize(13)
+            .fontColor(this.selectedType === type ? COLOR_PRIMARY : COLOR_MUTED)
+          Text(type).layoutWeight(1).fontSize(12).fontColor(this.selectedType === type ? COLOR_TEXT : COLOR_MUTED)
+          Text(this.typeCount(type).toString()).fontSize(11).fontColor(COLOR_MUTED)
+        }
+        .width('100%')
+        .height(34)
+        .padding({ left: 7, right: 7 })
+        .backgroundColor(this.selectedType === type ? COLOR_PRIMARY_SOFT : Color.Transparent)
+        .borderRadius(2)
+        .onClick(() => { this.selectedType = type; })
+      }, (type: string) => type)
+    }
+    .width(196)
+    .padding({ right: 16 })
+    .border({ width: { right: 1 }, color: COLOR_BORDER })
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  MobileFilters() {
+    Column({ space: 10 }) {
+      Text('主题').fontSize(12).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
       Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
         ForEach(['全部主题'].concat(RESOURCE_CATEGORIES), (category: string) => {
           Button(category)
-            .height(32).fontSize(11)
-            .fontColor(this.selectedCategory === category ? COLOR_PRIMARY : COLOR_MUTED)
-            .backgroundColor(this.selectedCategory === category ? COLOR_PRIMARY_SOFT : COLOR_SURFACE)
+            .height(30)
+            .fontSize(11)
+            .fontColor(this.selectedCategory === category ? '#FFFFFF' : COLOR_MUTED)
+            .backgroundColor(this.selectedCategory === category ? COLOR_PRIMARY : COLOR_SURFACE)
             .border({ width: 1, color: this.selectedCategory === category ? COLOR_PRIMARY : COLOR_BORDER })
-            .borderRadius(4)
+            .borderRadius(2)
             .margin({ right: 6, bottom: 6 })
             .onClick(() => { this.selectedCategory = category; })
         }, (category: string) => category)
       }
       .width('100%')
-      Text('资料类型').fontSize(12).fontWeight(FontWeight.Medium).fontColor(COLOR_MUTED)
+      Text('资料类型').fontSize(12).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
       Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
         ForEach(['全部类型'].concat(RESOURCE_TYPES), (type: string) => {
           Button(type)
-            .height(32).fontSize(11)
-            .fontColor(this.selectedType === type ? COLOR_PRIMARY : COLOR_MUTED)
-            .backgroundColor(this.selectedType === type ? COLOR_PRIMARY_SOFT : COLOR_SURFACE)
+            .height(30)
+            .fontSize(11)
+            .fontColor(this.selectedType === type ? '#FFFFFF' : COLOR_MUTED)
+            .backgroundColor(this.selectedType === type ? COLOR_PRIMARY : COLOR_SURFACE)
             .border({ width: 1, color: this.selectedType === type ? COLOR_PRIMARY : COLOR_BORDER })
-            .borderRadius(4)
+            .borderRadius(2)
             .margin({ right: 6, bottom: 6 })
             .onClick(() => { this.selectedType = type; })
         }, (type: string) => type)
@@ -133,16 +301,21 @@ export struct KnowledgePage {
       .width('100%')
     }
     .width('100%')
-    .padding({ top: 4, bottom: 2 })
+    .padding({ top: 14, bottom: 8 })
     .alignItems(HorizontalAlign.Start)
   }
 
   @Builder
   ResourceList() {
     if (this.resources().length === 0) {
-      Text('没有匹配的资源').width('100%').padding(30).textAlign(TextAlign.Center).fontSize(14).fontColor(COLOR_MUTED)
+      Column({ space: 7 }) {
+        Text('没有匹配的资源').fontSize(14).fontWeight(FontWeight.Medium).fontColor(COLOR_TEXT)
+        Text('调整主题、类型或搜索词后再试。').fontSize(12).fontColor(COLOR_MUTED)
+      }
+      .width('100%')
+      .padding({ top: 42, bottom: 42 })
     } else {
-      Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.SpaceBetween }) {
+      Column({ space: 0 }) {
         ForEach(this.resources(), (resource: KnowledgeResource) => {
           ResourceCard({
             resource: resource,
@@ -156,8 +329,108 @@ export struct KnowledgePage {
   }
 
   @Builder
+  DesktopResourceTable() {
+    Column({ space: 0 }) {
+      Row() {
+        Text('资源').width('48%').fontSize(11).fontWeight(FontWeight.Medium).fontColor(COLOR_MUTED)
+        Text('课程与作者').width('25%').fontSize(11).fontWeight(FontWeight.Medium).fontColor(COLOR_MUTED)
+        Text('使用情况').width('19%').fontSize(11).fontWeight(FontWeight.Medium).fontColor(COLOR_MUTED)
+        Text('操作').width('8%').textAlign(TextAlign.End)
+          .fontSize(11).fontWeight(FontWeight.Medium).fontColor(COLOR_MUTED)
+      }
+      .width('100%')
+      .height(42)
+      .padding({ left: 16, right: 16 })
+      .backgroundColor(COLOR_SURFACE_ALT)
+      .border({ width: { bottom: 1 }, color: COLOR_BORDER })
+      this.ResourceList()
+    }
+    .width('100%')
+    .backgroundColor(COLOR_SURFACE)
+    .border({ width: 1, color: COLOR_BORDER })
+    .borderRadius(3)
+  }
+
+  @Builder
+  ResourceActionRail() {
+    Column({ space: 0 }) {
+      Text('我的知享').fontSize(14).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+        .width('100%').padding({ bottom: 12 })
+      Divider().color(COLOR_BORDER)
+      Row() {
+        Text('已收藏').fontSize(12).fontColor(COLOR_MUTED)
+        Blank()
+        Text(this.savedResourceIds.length.toString()).fontSize(16).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+      }
+      .width('100%').padding({ top: 14, bottom: 14 })
+      Row() {
+        Text('本页资源').fontSize(12).fontColor(COLOR_MUTED)
+        Blank()
+        Text(this.resources().length.toString()).fontSize(16).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+      }
+      .width('100%').padding({ bottom: 14 })
+      Row() {
+        Text('我的贡献').fontSize(12).fontColor(COLOR_MUTED)
+        Blank()
+        Text(this.extraResources.length.toString()).fontSize(16).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+      }
+      .width('100%').padding({ bottom: 14 })
+      Divider().color(COLOR_BORDER).margin({ bottom: 16 })
+      Button('分享资源')
+        .width('100%').height(40).fontSize(13).fontWeight(FontWeight.Medium)
+        .fontColor(COLOR_PRIMARY).backgroundColor(COLOR_SURFACE)
+        .border({ width: 1, color: COLOR_PRIMARY }).borderRadius(3)
+        .onClick(() => { this.openComposer(); })
+      Text('公开资源会保留作者、课程与文件信息。')
+        .width('100%').fontSize(11).lineHeight(17).fontColor(COLOR_MUTED).margin({ top: 12 })
+    }
+    .width(208)
+    .padding({ left: 18 })
+    .border({ width: { left: 1 }, color: COLOR_BORDER })
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  ResourceWorkspace() {
+    if (this.isWide) {
+      Row({ space: 0 }) {
+        this.DesktopFilterRail()
+        Column({ space: 10 }) {
+          Row() {
+            Text('校园资源').fontSize(15).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+            Blank()
+            Text(`${this.resources().length} 份`).fontSize(11).fontColor(COLOR_MUTED)
+          }
+          .width('100%')
+          this.DesktopResourceTable()
+        }
+        .layoutWeight(1)
+        .padding({ left: 18, right: 18 })
+        .alignItems(HorizontalAlign.Start)
+        this.ResourceActionRail()
+      }
+      .width('100%')
+      .padding({ top: 18 })
+      .alignItems(VerticalAlign.Top)
+    } else {
+      Column({ space: 8 }) {
+        this.MobileFilters()
+        Row() {
+          Text('校园资源').fontSize(15).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+          Blank()
+          Text(`${this.resources().length} 份`).fontSize(11).fontColor(COLOR_MUTED)
+        }
+        .width('100%')
+        this.ResourceList()
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+    }
+  }
+
+  @Builder
   Detail() {
-    ForEach(this.resources(), (resource: KnowledgeResource) => {
+    ForEach(this.allResources(), (resource: KnowledgeResource) => {
       if (resource.id === this.selectedResourceId) {
         ResourceDetail({
           resource: resource,
@@ -194,11 +467,6 @@ export struct KnowledgePage {
     Scroll() {
       Row() {
         Column({ space: 16 }) {
-          PageTitle({
-            eyebrow: '知享 · 校园知识社区',
-            title: this.isWide ? '资源库与技术讨论' : '知享',
-            description: '按主题和资料类型查找同学分享的课件、笔记、源码与经验，也可以进入讨论继续交流。'
-          })
           if (this.showComposer) {
             KnowledgeComposer({
               isResource: this.activeMode === 0,
@@ -215,32 +483,10 @@ export struct KnowledgePage {
           } else if (this.selectedResourceId.length > 0) {
             this.Detail()
           } else {
-            Row({ space: 10 }) {
-              TextInput({ placeholder: this.activeMode === 0 ? '搜索课程、标题、标签' : '搜索帖子、技术点、标签', text: this.query })
-                .layoutWeight(1).height(46).fontSize(14).backgroundColor(COLOR_SURFACE)
-                .border({ width: 1, color: COLOR_BORDER }).borderRadius(4)
-                .onChange((value: string) => { this.query = value; })
-              Button(this.activeMode === 0 ? '分享资源' : '发布讨论')
-                .height(46).fontSize(13).fontColor(COLOR_PRIMARY).backgroundColor(COLOR_PRIMARY_SOFT).borderRadius(4)
-                .onClick(() => {
-                  if (!this.isLoggedIn) {
-                    this.onRequireLogin();
-                  } else {
-                    this.showComposer = true;
-                  }
-                })
-            }
-            .width('100%')
+            this.PageHeader()
             this.ModeBar()
             if (this.activeMode === 0) {
-              this.ResourceFilters()
-              Row() {
-                Text('校园资源').fontSize(17).fontWeight(FontWeight.Bold).fontColor(COLOR_PRIMARY)
-                Blank()
-                Text(`${this.resources().length} 份`).fontSize(12).fontColor(COLOR_MUTED)
-              }
-              .width('100%')
-              this.ResourceList()
+              this.ResourceWorkspace()
             } else {
               DiscussionFeed({
                 query: this.query,
@@ -254,7 +500,7 @@ export struct KnowledgePage {
         }
         .width('100%')
         .constraintSize({ maxWidth: PAGE_MAX_WIDTH })
-        .padding({ left: this.isWide ? 28 : 18, right: this.isWide ? 28 : 18, top: 22, bottom: 28 })
+        .padding({ left: this.isWide ? 24 : 16, right: this.isWide ? 24 : 16, top: 20, bottom: 28 })
       }
       .width('100%')
       .justifyContent(FlexAlign.Center)

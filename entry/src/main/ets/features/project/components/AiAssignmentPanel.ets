@@ -29,11 +29,20 @@ export struct AiAssignmentPanel {
   @Link firstOwner: string;
   @Link secondOwner: string;
   @Link thirdOwner: string;
-  onConfirm: () => void = () => {};
+  onConfirm: (tasks: ProjectTask[]) => void = (_tasks: ProjectTask[]) => {};
 
   private complete(): boolean {
     return this.projectGoal.trim().length > 0 && this.deliverable.trim().length > 0 &&
       this.memberDetails.trim().length > 0 && this.constraints.trim().length > 0;
+  }
+
+  private loadDemoContext(): void {
+    this.projectGoal = '完成可安装的可行 CampusOps HarmonyOS Demo，跑通机会履约黄金链路。';
+    this.deliverable = '7 月 24 日前完成 HAP、核心链路测试记录、5 分钟演示脚本和答辩材料。';
+    this.memberDetails = `${this.leaderName.length > 0 ? this.leaderName : '队长'}负责产品统筹与最终提交；` +
+      `${this.memberName.length > 0 ? this.memberName : '队员'}负责交互走查和演示表达。`;
+    this.constraints = '关键任务必须保留人工确认；先保证手机和平板流程稳定，再接入额外能力。';
+    this.aiDraftGenerated = false;
   }
 
   private options(): SelectOption[] {
@@ -80,6 +89,19 @@ export struct AiAssignmentPanel {
       '尚未选择指导老师，验收角色暂由队长承担。';
   }
 
+  private confirmedTasks(): ProjectTask[] {
+    return PROJECT_TASKS.map((task: ProjectTask, index: number) => {
+      const confirmedTask: ProjectTask = {
+        id: task.id,
+        title: task.title,
+        owner: this.owner(index),
+        dueDate: task.dueDate,
+        acceptance: task.acceptance
+      };
+      return confirmedTask;
+    });
+  }
+
   @Builder
   MemberEvidence(name: string, role: string, evidence: string, color: string, fill: string) {
     Column({ space: 5 }) {
@@ -95,7 +117,7 @@ export struct AiAssignmentPanel {
     .padding(14)
     .backgroundColor(COLOR_SURFACE)
     .border({ width: 1, color: COLOR_BORDER })
-    .borderRadius(7)
+    .borderRadius(4)
     .alignItems(HorizontalAlign.Start)
   }
 
@@ -104,8 +126,8 @@ export struct AiAssignmentPanel {
     Column({ space: 10 }) {
       Row() {
         Column({ space: 3 }) {
-          Text('01 先把信息说完整').fontSize(17).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
-          Text('AI 只读取你确认提交的内容，不根据一个技能标签猜任务。').fontSize(12).fontColor(COLOR_MUTED)
+          Text('项目上下文').fontSize(16).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+          Text('目标、交付和限制').fontSize(12).fontColor(COLOR_MUTED)
         }
         .alignItems(HorizontalAlign.Start)
         Blank()
@@ -159,12 +181,18 @@ export struct AiAssignmentPanel {
           .border({ width: 1, color: COLOR_BORDER }).borderRadius(5)
           .onChange((value: string) => { this.constraints = value; this.aiDraftGenerated = false; })
       }
+      Button('填入演示上下文')
+        .width('100%').height(40).fontSize(13)
+        .fontColor(this.canManageProject ? COLOR_BLUE : COLOR_MUTED)
+        .backgroundColor(this.canManageProject ? COLOR_BLUE_SOFT : '#E4E8E5')
+        .borderRadius(5).enabled(this.canManageProject)
+        .onClick(() => { this.loadDemoContext(); })
     }
     .width('100%')
     .padding(18)
     .backgroundColor(COLOR_SURFACE)
     .border({ width: 1, color: COLOR_BORDER })
-    .borderRadius(8)
+    .borderRadius(4)
     .alignItems(HorizontalAlign.Start)
   }
 
@@ -173,8 +201,8 @@ export struct AiAssignmentPanel {
     Column({ space: 10 }) {
       Row() {
         Column({ space: 3 }) {
-          Text('02 选择分析侧重点').fontSize(17).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
-          Text('这些是建议权重，最终仍由负责人审核。').fontSize(12).fontColor(COLOR_MUTED)
+          Text('分析侧重点').fontSize(16).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+          Text('生成后仍需负责人确认').fontSize(12).fontColor(COLOR_MUTED)
         }
         .alignItems(HorizontalAlign.Start)
         Blank()
@@ -200,7 +228,7 @@ export struct AiAssignmentPanel {
     .padding(18)
     .backgroundColor('#F8FBFA')
     .border({ width: 1, color: COLOR_PRIMARY })
-    .borderRadius(8)
+    .borderRadius(4)
     .alignItems(HorizontalAlign.Start)
   }
 
@@ -209,8 +237,8 @@ export struct AiAssignmentPanel {
     Column({ space: 12 }) {
       Row() {
         Column({ space: 3 }) {
-          Text('03 AI 分析结果').fontSize(17).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
-          Text('每项建议都给出匹配理由和需要人工确认的风险。').fontSize(12).fontColor(COLOR_MUTED)
+          Text('AI 分工建议').fontSize(16).fontWeight(FontWeight.Bold).fontColor(COLOR_TEXT)
+          Text('核对负责人和风险后发布').fontSize(12).fontColor(COLOR_MUTED)
         }
         .alignItems(HorizontalAlign.Start)
         Blank()
@@ -246,7 +274,7 @@ export struct AiAssignmentPanel {
             .width('100%')
           }
           .width(this.isWide ? '32%' : '100%').padding(14).margin({ bottom: 10 })
-          .backgroundColor(COLOR_SURFACE).border({ width: 1, color: COLOR_BORDER }).borderRadius(7)
+          .backgroundColor(COLOR_SURFACE).border({ width: 1, color: COLOR_BORDER }).borderRadius(4)
           .alignItems(HorizontalAlign.Start)
         }, (task: ProjectTask) => task.id)
       }
@@ -254,10 +282,10 @@ export struct AiAssignmentPanel {
       Button('确认建议并发布到项目看板')
         .width('100%').height(46).fontSize(14).fontColor(this.canManageProject ? '#FFFFFF' : COLOR_MUTED)
         .backgroundColor(this.canManageProject ? COLOR_PRIMARY : '#E4E8E5').borderRadius(5)
-        .enabled(this.canManageProject).onClick(() => { this.onConfirm(); })
+        .enabled(this.canManageProject).onClick(() => { this.onConfirm(this.confirmedTasks()); })
     }
     .width('100%').padding(18).backgroundColor(COLOR_SURFACE)
-    .border({ width: 1, color: COLOR_BORDER }).borderRadius(8).alignItems(HorizontalAlign.Start)
+    .border({ width: 1, color: COLOR_BORDER }).borderRadius(4).alignItems(HorizontalAlign.Start)
   }
 
   build() {

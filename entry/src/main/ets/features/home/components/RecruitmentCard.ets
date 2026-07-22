@@ -1,14 +1,10 @@
-import { RecruitmentPost } from '../../../domain/WorkflowModels';
-import { StatusPill } from '../../../shared/components/StatusPill';
+import { RecruitmentKind, RecruitmentPost } from '../../../domain/WorkflowModels';
 import {
   COLOR_AMBER,
-  COLOR_AMBER_SOFT,
   COLOR_BLUE,
-  COLOR_BLUE_SOFT,
   COLOR_BORDER,
   COLOR_MUTED,
   COLOR_PRIMARY,
-  COLOR_PRIMARY_SOFT,
   COLOR_SURFACE,
   COLOR_TEXT
 } from '../../../shared/Theme';
@@ -23,74 +19,202 @@ export struct RecruitmentCard {
   onAction: () => void = () => {};
 
   private defaultActionLabel(): string {
-    return this.post.kind === '比赛招募' ? '申请加入' : '报名岗位';
+    return this.post.kind === RecruitmentKind.COMPETITION ? '申请加入' : '报名岗位';
   }
 
-  build() {
+  private accentColor(): string {
+    return this.post.kind === RecruitmentKind.COMPETITION ? COLOR_PRIMARY : COLOR_BLUE;
+  }
+
+  @Builder
+  CompactAction() {
+    Button(this.actionLabel.length > 0 ? this.actionLabel : this.defaultActionLabel())
+      .height(36)
+      .fontSize(12)
+      .fontWeight(FontWeight.Medium)
+      .fontColor(this.actionDisabled ? COLOR_MUTED : '#FFFFFF')
+      .backgroundColor(this.actionDisabled ? '#E8ECEA' : COLOR_PRIMARY)
+      .borderRadius(4)
+      .enabled(!this.actionDisabled)
+      .onClick(() => {
+        this.onAction();
+      })
+  }
+
+  @Builder
+  DesktopRow() {
+    Row() {
+      Column({ space: 6 }) {
+        Row({ space: 8 }) {
+          Text(this.post.kind === RecruitmentKind.COMPETITION ? '比赛' : '活动')
+            .fontSize(11)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(this.accentColor())
+            .letterSpacing(0.6)
+          Text(this.post.organization)
+            .fontSize(11)
+            .fontColor(COLOR_MUTED)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+        }
+        .width('100%')
+        Text(this.post.title)
+          .fontSize(17)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(COLOR_TEXT)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+          .onClick(() => {
+            this.onOpen();
+          })
+        Text(this.post.summary)
+          .fontSize(12)
+          .lineHeight(18)
+          .fontColor(COLOR_MUTED)
+          .maxLines(2)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .layoutWeight(1)
+      .padding({ right: 22 })
+      .alignItems(HorizontalAlign.Start)
+
+      Column({ space: 6 }) {
+        Text('需要角色').fontSize(11).fontColor(COLOR_MUTED).letterSpacing(0.5)
+        Text(this.post.requiredRole)
+          .fontSize(13)
+          .lineHeight(19)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(COLOR_TEXT)
+          .maxLines(2)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }
+      .width(190)
+      .padding({ right: 18 })
+      .alignItems(HorizontalAlign.Start)
+
+      Column({ space: 6 }) {
+        Text(`${this.post.publisher} · ${this.post.publisherRole}`)
+          .fontSize(12)
+          .fontColor(COLOR_TEXT)
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+        Text(`截止 ${this.post.deadline}`)
+          .fontSize(12)
+          .fontColor(COLOR_AMBER)
+          .maxLines(1)
+      }
+      .width(190)
+      .padding({ right: 18 })
+      .alignItems(HorizontalAlign.Start)
+
+      Column({ space: 10 }) {
+        Text(this.post.progress)
+          .width('100%')
+          .fontSize(12)
+          .fontColor(COLOR_MUTED)
+          .textAlign(TextAlign.End)
+        Row({ space: 8 }) {
+          Button('详情')
+            .layoutWeight(1)
+            .height(36)
+            .fontSize(12)
+            .fontColor(COLOR_TEXT)
+            .backgroundColor(COLOR_SURFACE)
+            .border({ width: 1, color: COLOR_BORDER })
+            .borderRadius(4)
+            .onClick(() => {
+              this.onOpen();
+            })
+          this.CompactAction()
+        }
+        .width('100%')
+      }
+      .width(210)
+      .alignItems(HorizontalAlign.End)
+    }
+    .width('100%')
+    .padding({ left: 14, right: 14, top: 16, bottom: 16 })
+    .alignItems(VerticalAlign.Top)
+  }
+
+  @Builder
+  MobileRow() {
     Column({ space: 10 }) {
       Row() {
-        StatusPill({
-          text: this.post.kind,
-          fillColor: this.post.kind === '比赛招募' ? COLOR_PRIMARY_SOFT : COLOR_BLUE_SOFT,
-          textColor: this.post.kind === '比赛招募' ? COLOR_PRIMARY : COLOR_BLUE
-        })
+        Text(this.post.kind === RecruitmentKind.COMPETITION ? '比赛组队' : '校园活动')
+          .fontSize(11)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(this.accentColor())
+          .letterSpacing(0.6)
         Blank()
-        Text(this.post.progress).fontSize(12).fontColor(COLOR_MUTED)
+        Text(this.post.progress).fontSize(11).fontColor(COLOR_MUTED)
       }
       .width('100%')
       Text(this.post.title)
-        .fontSize(19)
+        .width('100%')
+        .fontSize(17)
         .fontWeight(FontWeight.Bold)
         .fontColor(COLOR_TEXT)
         .maxLines(2)
         .textOverflow({ overflow: TextOverflow.Ellipsis })
+        .onClick(() => {
+          this.onOpen();
+        })
       Text(this.post.summary)
-        .fontSize(13)
-        .lineHeight(20)
-        .fontColor(COLOR_MUTED)
-        .maxLines(this.isWide ? 2 : 3)
-        .textOverflow({ overflow: TextOverflow.Ellipsis })
-      Row({ space: 8 }) {
-        Text(this.post.publisher).fontSize(13).fontWeight(FontWeight.Medium).fontColor(COLOR_TEXT)
-        Text(this.post.publisherRole).fontSize(12).fontColor(COLOR_MUTED)
-      }
-      .width('100%')
-      Text(this.post.organization).fontSize(11).fontColor(COLOR_BLUE)
-      Text(`${this.post.requiredRole} · 截止 ${this.post.deadline}`)
+        .width('100%')
         .fontSize(12)
-        .fontColor(COLOR_AMBER)
-      Row({ space: 8 }) {
-        Button('查看详情')
-          .layoutWeight(1)
-          .height(38)
-          .fontSize(13)
-          .fontColor(COLOR_PRIMARY)
-          .backgroundColor(COLOR_PRIMARY_SOFT)
+        .lineHeight(18)
+        .fontColor(COLOR_MUTED)
+        .maxLines(2)
+        .textOverflow({ overflow: TextOverflow.Ellipsis })
+      Row() {
+        Column({ space: 4 }) {
+          Text(this.post.requiredRole)
+            .fontSize(13)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(COLOR_TEXT)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+          Text(`${this.post.publisher} · 截止 ${this.post.deadline}`)
+            .fontSize(11)
+            .fontColor(COLOR_MUTED)
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+        }
+        .layoutWeight(1)
+        .padding({ right: 10 })
+        .alignItems(HorizontalAlign.Start)
+        Button('详情')
+          .height(36)
+          .fontSize(12)
+          .fontColor(COLOR_TEXT)
+          .backgroundColor(COLOR_SURFACE)
+          .border({ width: 1, color: COLOR_BORDER })
           .borderRadius(4)
+          .margin({ right: 8 })
           .onClick(() => {
             this.onOpen();
           })
-        Button(this.actionLabel.length > 0 ? this.actionLabel : this.defaultActionLabel())
-          .layoutWeight(1)
-          .height(38)
-          .fontSize(13)
-          .fontColor(this.actionDisabled ? COLOR_MUTED : '#FFFFFF')
-          .backgroundColor(this.actionDisabled ? '#E8EBE8' : COLOR_PRIMARY)
-          .borderRadius(4)
-          .enabled(!this.actionDisabled)
-          .onClick(() => {
-            this.onAction();
-          })
+        this.CompactAction()
       }
       .width('100%')
+      .alignItems(VerticalAlign.Bottom)
     }
-    .width(this.isWide ? '49%' : '100%')
-    .constraintSize({ minHeight: 270 })
-    .margin({ bottom: 12 })
-    .padding(18)
-    .backgroundColor(COLOR_SURFACE)
-    .borderRadius(8)
-    .border({ width: 1, color: COLOR_BORDER })
+    .width('100%')
+    .padding({ left: 2, right: 2, top: 16, bottom: 16 })
     .alignItems(HorizontalAlign.Start)
+  }
+
+  build() {
+    Column() {
+      if (this.isWide) {
+        this.DesktopRow()
+      } else {
+        this.MobileRow()
+      }
+      Divider().color(COLOR_BORDER)
+    }
+    .width('100%')
+    .backgroundColor(COLOR_SURFACE)
   }
 }
